@@ -48,8 +48,6 @@ uint8_t txMsg_p2_data[8];
 uint8_t txMsg_p3_data[8];
 uint8_t txMsg_p4_data[8];
 
-static uint8_t tx_buf[1 + 48 + 1];
-
 #define HEADER_Serial 0xAA
 
 void pack_pressure_reply(uint8_t *msg1, uint8_t *msg2, uint8_t *msg3, uint8_t *msg4, ForceSensor * fs){
@@ -125,8 +123,8 @@ int fingertip_main(void){
 	txMsg_t1.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_t1.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_t1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_t1.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_t1.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_t1.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_t1.FDFormat = FDCAN_FD_CAN;
 	txMsg_t1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_t1.MessageMarker = 0;
 
@@ -135,8 +133,8 @@ int fingertip_main(void){
 	txMsg_i1.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_i1.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_i1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_i1.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_i1.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_i1.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_i1.FDFormat = FDCAN_FD_CAN;
 	txMsg_i1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_i1.MessageMarker = 0;
 
@@ -145,8 +143,8 @@ int fingertip_main(void){
 	txMsg_p1.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_p1.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_p1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p1.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_p1.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_p1.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_p1.FDFormat = FDCAN_FD_CAN;
 	txMsg_p1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_p1.MessageMarker = 0;
 
@@ -155,8 +153,8 @@ int fingertip_main(void){
 	txMsg_p2.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_p2.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_p2.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p2.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_p2.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_p2.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_p2.FDFormat = FDCAN_FD_CAN;
 	txMsg_p2.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_p2.MessageMarker = 0;
 
@@ -165,8 +163,8 @@ int fingertip_main(void){
 	txMsg_p3.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_p3.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_p3.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p3.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_p3.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_p3.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_p3.FDFormat = FDCAN_FD_CAN;
 	txMsg_p3.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_p3.MessageMarker = 0;
 
@@ -175,8 +173,8 @@ int fingertip_main(void){
 	txMsg_p4.TxFrameType = FDCAN_DATA_FRAME;
 	txMsg_p4.DataLength = FDCAN_DLC_BYTES_8;
 	txMsg_p4.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p4.BitRateSwitch = FDCAN_BRS_OFF;
-	txMsg_p4.FDFormat = FDCAN_CLASSIC_CAN;
+	txMsg_p4.BitRateSwitch = FDCAN_BRS_ON;
+	txMsg_p4.FDFormat = FDCAN_FD_CAN;
 	txMsg_p4.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_p4.MessageMarker = 0;
 
@@ -267,7 +265,7 @@ int fingertip_main(void){
 			uint32_t start_time = __HAL_TIM_GET_COUNTER(&htim15);
 			loop_counter++;
 			if (HAL_GetTick() - last_hz_print >= 1000) {
-//				printf("Loop Rate: %lu Hz, Eval Time: %lu us\n\r", loop_counter, eval_time);
+				printf("Loop Rate: %lu Hz, Eval Time: %lu us\n\r", loop_counter, eval_time);
 				loop_counter = 0;
 				last_hz_print = HAL_GetTick();
 			}
@@ -278,10 +276,11 @@ int fingertip_main(void){
 			VL53L4CD_Result_t Results;
 
 			/* Poll for data using the global SensorObj */
-			for (int i = 0; i < TOF_SENSOR_COUNT; i++) {
+			for (int i = 1; i < TOF_SENSOR_COUNT; i++) {
 				if (VL53L4CD_GetDistance(&SensorObjs[i], &Results) == 0) {
 					range[i] = Results.ZoneResult[0].Distance[0];
-//					printf("Sensor %d: %lu mm\n\r", i + 1, Results.ZoneResult[0].Distance[0]);
+//					printf("Sensor %d: %lu mm\n\r", i , Results.ZoneResult[0].Distance[0]);
+//					printf("Sensor %d: %lu mm\n\r", i , range[i]);
 				}
 			}
 			if(BNO080_dataAvailable() == 1)
@@ -295,78 +294,73 @@ int fingertip_main(void){
 //				  printf("%.2d\t%.2d\t%.2d\n", BNO080_Roll, BNO080_Pitch, BNO080_Yaw); //print roll, pitch, yaw in degree
 			  }
 
-
+//			printf("Sensor %d: %lu mm\n\r", 1 , range[1]);
 			// sample pressure sensors
 			fingertip.Sample();
 
 
-//	        // pack and send CAN messages
-//	        pack_pressure_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, txMsg_p4_data, &fingertip);
-//	        pack_tof_reply(txMsg_t1_data);
-//
-//	    	// sending FDCAN messages
-//	        // Helper lambda or function to send with wait
-//	        auto send_can = [&](FDCAN_TxHeaderTypeDef* header, uint8_t* data) {
-////	            while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) == 0) {
-////	                // Busy wait for free space
-////	            }
-////	            HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
-//	        	uint32_t timeout = 100;
-//				while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) == 0 && timeout > 0) {
-//					timeout--;
-//				}
-//				if (timeout > 0) {
-//					HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
-//				}
-//	        };
-//
-//	        send_can(&txMsg_t1, txMsg_t1_data);
-//	        send_can(&txMsg_p1, txMsg_p1_data);
-//	        send_can(&txMsg_p2, txMsg_p2_data);
-//	        send_can(&txMsg_p3, txMsg_p3_data);
-//	        send_can(&txMsg_p4, txMsg_p4_data);
+	        // pack and send CAN messages
+	        pack_pressure_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, txMsg_p4_data, &fingertip);
+	        pack_tof_reply(txMsg_t1_data);
+
+	    	// sending FDCAN messages
+	        // Helper lambda or function to send with wait
+	        auto send_can = [&](FDCAN_TxHeaderTypeDef* header, uint8_t* data) {
+	        	// G4 FDCAN Tx FIFO is only 3 deep; wait (time-based) for a free slot
+	        	// so frames beyond the first 3 aren't silently dropped.
+	        	uint32_t start = HAL_GetTick();
+				while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) == 0) {
+					if (HAL_GetTick() - start > 3) {  // ~3ms cap; each frame drains in ~0.22ms
+						return;
+					}
+				}
+				HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
+	        };
+
+	        send_can(&txMsg_t1, txMsg_t1_data);
+	        send_can(&txMsg_p1, txMsg_p1_data);
+	        send_can(&txMsg_p2, txMsg_p2_data);
+	        send_can(&txMsg_p3, txMsg_p3_data);
+	        send_can(&txMsg_p4, txMsg_p4_data);
 
 	        eval_time = __HAL_TIM_GET_COUNTER(&htim15) - start_time;
 
-////	         Serial version
-//	        printf("%lu,0,0,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n\r",
+//	         Serial version
+//	        printf("%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n\r",
 //	        	HAL_GetTick(),
 //	            fingertip.raw_data[0], fingertip.raw_data[1], fingertip.raw_data[2], fingertip.raw_data[3],
 //	            fingertip.raw_data[4], fingertip.raw_data[5], fingertip.raw_data[6], fingertip.raw_data[7],
-//	            range[0], range[1], range[2], range[3]);
+//	            range[1], range[2]);
 
 
 //			uint8_t tx_buf[1 + 48 + 1]; // header + data + checksum
-
-			// Fill header
-			tx_buf[0] = HEADER_Serial;
-
-			// Fill data (little endian from uint16_t)
-			uint32_t packet[12];
-
-			for (int i = 0; i < 8; ++i) {
-				packet[i] = fingertip.raw_data[i];
-			}
-			for (int i = 0; i < 3; i++) {
-				packet[i + 8] = range[i];
-			}
-
-			packet[11] = HAL_GetTick();
-
-			// Copy data into tx buffer
-			memcpy(&tx_buf[1], packet, sizeof(packet));
-
-			// Compute checksum (simple sum)
-			uint8_t checksum = 0;
-			for (int i = 0; i < 48; i++) {
-				checksum += tx_buf[1 + i];
-			}
-
-			// Store checksum
-			tx_buf[49] = checksum;
+//
+//			// Fill header
+//			tx_buf[0] = HEADER_Serial;
+//
+//			// Fill data (little endian from uint16_t)
+//			uint32_t packet[12];
+//
+//			for (int i = 0; i < 8; ++i) {
+//				packet[i] = fingertip.raw_data[i];
+//			}
+//			for (int i = 0; i < 4; i++) {
+//				packet[i + 8] = range[i];
+//			}
+//
+//			// Copy data into tx buffer
+//			memcpy(&tx_buf[1], packet, sizeof(packet));
+//
+//			// Compute checksum (simple sum)
+//			uint8_t checksum = 0;
+//			for (int i = 0; i < 48; i++) {
+//				checksum += tx_buf[1 + i];
+//			}
+//
+//			// Store checksum
+//			tx_buf[49] = checksum;
 
 			// Transmit
-//			HAL_UART_Transmit(&huart1, tx_buf, sizeof(tx_buf),50);
 //			HAL_UART_Transmit_IT(&huart1, tx_buf, sizeof(tx_buf));
 
 //			printf("\n");
@@ -385,9 +379,9 @@ int fingertip_main(void){
 //	                              range[0], range[1], range[2], range[3]);
 //
 //	        // Non-blocking — returns immediately, DMA handles the rest
-	        if (HAL_UART_GetState(&huart1) == HAL_UART_STATE_READY) {
-	        	HAL_UART_Transmit_DMA(&huart1, tx_buf, sizeof(tx_buf));
-	        }
+//	        if (HAL_UART_GetState(&huart1) == HAL_UART_STATE_READY) {
+//	            HAL_UART_Transmit_DMA(&huart1, (uint8_t*)msg_buf, msg_len);
+//	        }
 
 //	        char msg_buf[128]; // Create the buffer
 //	        int msg_len;       // To store the actual length of the string

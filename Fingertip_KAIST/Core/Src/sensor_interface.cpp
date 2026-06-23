@@ -86,15 +86,15 @@ static int32_t Init_One_Sensor(int index, uint16_t new_addr) {
 
 int32_t TOF_Init(void) {
     /* 1. Reset all sensors */
-    HAL_GPIO_WritePin(TOF_XSHUT_1_GPIO_Port, TOF_XSHUT_1_Pin, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(TOF_XSHUT_1_GPIO_Port, TOF_XSHUT_1_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(TOF_XSHUT_2_GPIO_Port, TOF_XSHUT_2_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(TOF_XSHUT_3_GPIO_Port, TOF_XSHUT_3_Pin, GPIO_PIN_RESET);
     HAL_Delay(10);
 
-    /* 2. Init Sensor 1 (Addr 0x54) */
-    HAL_GPIO_WritePin(TOF_XSHUT_1_GPIO_Port, TOF_XSHUT_1_Pin, GPIO_PIN_SET);
-    HAL_Delay(5);
-    if (Init_One_Sensor(0, 0x54) != 0) return -1;
+//    /* 2. Init Sensor 1 (Addr 0x54) */
+//    HAL_GPIO_WritePin(TOF_XSHUT_1_GPIO_Port, TOF_XSHUT_1_Pin, GPIO_PIN_SET);
+//    HAL_Delay(5);
+//    if (Init_One_Sensor(0, 0x54) != 0) return -1;
 
     /* 3. Init Sensor 2 (Addr 0x56) */
     HAL_GPIO_WritePin(TOF_XSHUT_2_GPIO_Port, TOF_XSHUT_2_Pin, GPIO_PIN_SET);

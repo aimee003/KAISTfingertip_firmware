@@ -99,8 +99,6 @@ int8_t ForceSensor::config_dev(struct ms5849_dev *dev){
     dev -> write = &ms5849_spi1_write;
 
     dev -> delay_ms = &ms5849_delay_ms;
-    dev -> delay_us = &ms5849_delay_us;
-
     rslt = ms5849_init(dev);
     //printf("* initialize sensor result = 0x%x *\r\n", rslt);
     HAL_Delay(250);
@@ -149,130 +147,76 @@ int8_t ForceSensor::config_dev(struct ms5849_dev *dev){
     
 void ForceSensor::Sample(){
 
+    struct ms5849_dev*  sensors[8] = {&s1,&s2,&s3,&s4,&s5,&s6,&s7,&s8};
+    struct ms5849_data* datasets[8] = {&data1,&data2,&data3,&data4,&data5,&data6,&data7,&data8};
 
-//	ms5849_get_sensor_data(sensor_comp, &data1, &s1);
-//	ms5849_get_sensor_data(sensor_comp, &data2, &s2);
-//	ms5849_get_sensor_data(sensor_comp, &data3, &s3);
-//	ms5849_get_sensor_data(sensor_comp, &data4, &s4);
-//	ms5849_get_sensor_data(sensor_comp, &data5, &s5);
-//	ms5849_get_sensor_data(sensor_comp, &data6, &s6);
-//	ms5849_get_sensor_data(sensor_comp, &data7, &s7);
-//	ms5849_get_sensor_data(sensor_comp, &data8, &s8);
-//
-//	// store data
-//	raw_data[0] = int(data1.pressure)-100000; // pressure is returned in Pa, could subtract actual sea level pressure here
-//	raw_data[1] = int(data2.pressure)-100000;
-//	raw_data[2] = int(data3.pressure)-100000;
-//	raw_data[3] = int(data4.pressure)-100000;
-//	raw_data[4] = int(data5.pressure)-100000;
-//	raw_data[5] = int(data6.pressure)-100000;
-//	raw_data[6] = int(data7.pressure)-100000;
-//	raw_data[7] = int(data8.pressure)-100000;
-//
-//    // could combine this with previous step
-//    offset_data[0] = raw_data[0]-offsets[0];
-//    offset_data[1] = raw_data[1]-offsets[1];
-//    offset_data[2] = raw_data[2]-offsets[2];
-//    offset_data[3] = raw_data[3]-offsets[3];
-//    offset_data[4] = raw_data[4]-offsets[4];
-//    offset_data[5] = raw_data[5]-offsets[5];
-//    offset_data[6] = raw_data[6]-offsets[6];
-//    offset_data[7] = raw_data[7]-offsets[7];
+    uint32_t d1[8];
 
-	struct ms5849_dev*  sensors[8]  = {&s1,&s2,&s3,&s4,&s5,&s6,&s7,&s8};
-	struct ms5849_data* datasets[8] = {&data1,&data2,&data3,&data4,&data5,&data6,&data7,&data8};
-	uint32_t d1[8], d2[8];
+    // === Phase 1: read the pressure results started on the PREVIOUS loop ===
+    // Because Phase 2 below starts a pressure conversion on EVERY loop for
+    // EVERY channel without exception, there is always a valid conversion to
+    // read here. Each raw code is validated: a 24-bit ADC result must be in
+    // (0, 0xFFFFFF]. A value of 0 means the conversion was not ready; an
+    // out-of-range value means a corrupt SPI read. In either case we reject
+    // it and reuse the last good code, so a bad read can never reach
+    // ms5849_compensate() -- which is quadratic in d1 and would otherwise
+    // turn a not-ready 0 into a multi-million-Pa spike.
+    for (int i = 0; i < 8; i++) {
+        uint32_t code = 0;
+        ms5849_read_press_raw(sensors[i], &code);
+        if (code < MS5849_ADC_CODE_MIN || code > MS5849_ADC_CODE_MAX) {
+            d1[i] = last_good_d1[i];   // reuse last valid sample
+            bad_read_count[i]++;
+        } else {
+            d1[i] = code;
+            last_good_d1[i] = code;
+        }
+    }
 
-	uint16_t conv_delay = ms5849_conversion_delay_us(&s1);
+    // === Phase 2: ALWAYS start the next pressure conversion, every channel ==
+    // This is the core fix. Pressure conversions are never skipped, so the
+    // pressure pipeline is never broken. (The old code skipped pressure once
+    // every 200 loops to do temperature, which left Phase 1 reading an
+    // unstarted register -> a 0 -> a spike.)
+    for (int i = 0; i < 8; i++) {
+        ms5849_start_press_conversion(sensors[i]);
+    }
 
-	// Phase A: start ALL 8 pressure conversions, wait ONCE, read ALL 8.
-	for (int i = 0; i < 8; i++)
-		ms5849_start_conversion(sensors[i], MS5849_CNV_ADC_SEL_PRESS);
-	sensors[1]->delay_us(conv_delay);
-	for (int i = 0; i < 8; i++)
-		ms5849_read_adc(sensors[i], MS5849_CNV_ADC_SEL_PRESS, &d1[i]);
+    // === Temperature: round-robin, one channel per loop =====================
+    // Temperature changes slowly, so it does not need to be sampled every
+    // loop -- but it must be refreshed far more often than the old once-per-
+    // second. Here one channel is serviced per loop: its temperature result
+    // (started one loop earlier) is read, validated, and cached; then a new
+    // temperature conversion for the NEXT channel is started. All 8 channels
+    // are refreshed every 8 loops (~25 ms at 200 Hz). This never displaces a
+    // pressure conversion -- the MS5849 pressure and temperature ADC result
+    // registers are independent, and a temp conversion can be in flight at
+    // the same time as a pressure conversion.
+    loop_count++;
+    if (temp_rr_pending) {
+        // read the temp conversion started for temp_rr_channel last loop
+        uint32_t code = 0;
+        ms5849_read_temp_raw(sensors[temp_rr_channel], &code);
+        if (code >= MS5849_ADC_CODE_MIN && code <= MS5849_ADC_CODE_MAX) {
+            cached_d2[temp_rr_channel] = code;
+            last_good_d2[temp_rr_channel] = code;
+        } else {
+            cached_d2[temp_rr_channel] = last_good_d2[temp_rr_channel];
+        }
+        // advance to the next channel
+        temp_rr_channel = (temp_rr_channel + 1) & 0x07;
+    }
+    // start the next channel's temperature conversion (runs concurrently
+    // with all 8 pressure conversions kicked off above)
+    ms5849_start_temp_conversion(sensors[temp_rr_channel]);
+    temp_rr_pending = true;
 
-	// Phase B: start ALL 8 temperature conversions, wait ONCE, read ALL 8.
-	for (int i = 0; i < 8; i++)
-		ms5849_start_conversion(sensors[i], MS5849_CNV_ADC_SEL_TEMP);
-	sensors[1]->delay_us(conv_delay);
-	for (int i = 0; i < 8; i++)
-		ms5849_read_adc(sensors[i], MS5849_CNV_ADC_SEL_TEMP, &d2[i]);
-
-	// Phase C: compensate + store. Each conversion was waited out for its
-	// correct settling time before being read, so d1/d2 are never read
-	// early -> never 0 -> compensate() never produces a spike.
-	for (int i = 0; i < 8; i++) {
-		ms5849_compensate(sensors[i], d1[i], d2[i], datasets[i]);
-		raw_data[i]    = (int)datasets[i]->pressure - 100000;
-		offset_data[i] = raw_data[i] - offsets[i];
-	}
-
-//    // === Phase 1: read the pressure results started on the PREVIOUS loop ===
-//    // Because Phase 2 below starts a pressure conversion on EVERY loop for
-//    // EVERY channel without exception, there is always a valid conversion to
-//    // read here. Each raw code is validated: a 24-bit ADC result must be in
-//    // (0, 0xFFFFFF]. A value of 0 means the conversion was not ready; an
-//    // out-of-range value means a corrupt SPI read. In either case we reject
-//    // it and reuse the last good code, so a bad read can never reach
-//    // ms5849_compensate() -- which is quadratic in d1 and would otherwise
-//    // turn a not-ready 0 into a multi-million-Pa spike.
-//    for (int i = 0; i < 8; i++) {
-//        uint32_t code = 0;
-//        ms5849_read_press_raw(sensors[i], &code);
-//        if (code < MS5849_ADC_CODE_MIN || code > MS5849_ADC_CODE_MAX) {
-//            d1[i] = last_good_d1[i];   // reuse last valid sample
-//            bad_read_count[i]++;
-//        } else {
-//            d1[i] = code;
-//            last_good_d1[i] = code;
-//        }
-//    }
-//
-//    // === Phase 2: ALWAYS start the next pressure conversion, every channel ==
-//    // This is the core fix. Pressure conversions are never skipped, so the
-//    // pressure pipeline is never broken. (The old code skipped pressure once
-//    // every 200 loops to do temperature, which left Phase 1 reading an
-//    // unstarted register -> a 0 -> a spike.)
-//    for (int i = 0; i < 8; i++) {
-//        ms5849_start_press_conversion(sensors[i]);
-//    }
-//
-//    // === Temperature: round-robin, one channel per loop =====================
-//    // Temperature changes slowly, so it does not need to be sampled every
-//    // loop -- but it must be refreshed far more often than the old once-per-
-//    // second. Here one channel is serviced per loop: its temperature result
-//    // (started one loop earlier) is read, validated, and cached; then a new
-//    // temperature conversion for the NEXT channel is started. All 8 channels
-//    // are refreshed every 8 loops (~25 ms at 200 Hz). This never displaces a
-//    // pressure conversion -- the MS5849 pressure and temperature ADC result
-//    // registers are independent, and a temp conversion can be in flight at
-//    // the same time as a pressure conversion.
-//    loop_count++;
-//    if (temp_rr_pending) {
-//        // read the temp conversion started for temp_rr_channel last loop
-//        uint32_t code = 0;
-//        ms5849_read_temp_raw(sensors[temp_rr_channel], &code);
-//        if (code >= MS5849_ADC_CODE_MIN && code <= MS5849_ADC_CODE_MAX) {
-//            cached_d2[temp_rr_channel] = code;
-//            last_good_d2[temp_rr_channel] = code;
-//        } else {
-//            cached_d2[temp_rr_channel] = last_good_d2[temp_rr_channel];
-//        }
-//        // advance to the next channel
-//        temp_rr_channel = (temp_rr_channel + 1) & 0x07;
-//    }
-//    // start the next channel's temperature conversion (runs concurrently
-//    // with all 8 pressure conversions kicked off above)
-//    ms5849_start_temp_conversion(sensors[temp_rr_channel]);
-//    temp_rr_pending = true;
-//
-//    // === Phase 3: compensate using validated d1 + freshly-cached d2 =========
-//    for (int i = 0; i < 8; i++) {
-//        ms5849_compensate(sensors[i], d1[i], cached_d2[i], datasets[i]);
-//        raw_data[i] = (int)datasets[i]->pressure - 100000;
-//        offset_data[i] = raw_data[i] - offsets[i];
-//    }
+    // === Phase 3: compensate using validated d1 + freshly-cached d2 =========
+    for (int i = 0; i < 8; i++) {
+        ms5849_compensate(sensors[i], d1[i], cached_d2[i], datasets[i]);
+        raw_data[i] = (int)datasets[i]->pressure - 100000;
+        offset_data[i] = raw_data[i] - offsets[i];
+    }
 }
 
 

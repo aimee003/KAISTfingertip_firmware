@@ -1,0 +1,2 @@
+../Drivers/vl53l4cd/modules/vl53l4cd_calibration.c:23:16:VL53L4CD_CalibrateOffset	56	static
+../Drivers/vl53l4cd/modules/vl53l4cd_calibration.c:114:16:VL53L4CD_CalibrateXtalk	80	static

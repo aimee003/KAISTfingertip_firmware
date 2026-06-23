@@ -1,0 +1,7 @@
+../Core/Src/fingertip.cpp:53:6:void pack_pressure_reply(uint8_t*, uint8_t*, uint8_t*, uint8_t*, ForceSensor*)	24	static
+../Core/Src/fingertip.cpp:91:6:void pack_tof_reply(uint8_t*)	16	static
+../Core/Src/fingertip.cpp:98:6:void pack_imu_reply(uint8_t*)	16	static
+../Core/Src/fingertip.cpp:308:26:fingertip_main()::<lambda(FDCAN_TxHeaderTypeDef*, uint8_t*)>	32	static
+../Core/Src/fingertip.cpp:106:5:int fingertip_main()	80	static
+../Core/Src/fingertip.cpp:437:1:void __static_initialization_and_destruction_0()	8	static
+../Core/Src/fingertip.cpp:437:1:cpp)	8	static

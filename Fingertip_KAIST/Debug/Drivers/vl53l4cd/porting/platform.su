@@ -1,0 +1,9 @@
+../Drivers/vl53l4cd/porting/platform.c:38:12:_I2CWrite	24	static
+../Drivers/vl53l4cd/porting/platform.c:42:12:_I2CRead	24	static
+../Drivers/vl53l4cd/porting/platform.c:46:9:VL53L4CD_WrByte	24	static
+../Drivers/vl53l4cd/porting/platform.c:63:9:VL53L4CD_WrWord	24	static
+../Drivers/vl53l4cd/porting/platform.c:81:9:VL53L4CD_WrDWord	32	static
+../Drivers/vl53l4cd/porting/platform.c:99:9:VL53L4CD_RdByte	32	static
+../Drivers/vl53l4cd/porting/platform.c:120:9:VL53L4CD_RdWord	32	static
+../Drivers/vl53l4cd/porting/platform.c:145:9:VL53L4CD_RdDWord	32	static
+../Drivers/vl53l4cd/porting/platform.c:170:9:VL53L4CD_WaitMs	24	static

@@ -144,8 +144,3 @@ int8_t ms5849_spi1_write(uint8_t cspin, uint8_t reg_addr, uint8_t *reg_data, uin
 void ms5849_delay_ms(uint32_t msec){ //delay in milliseconds
     HAL_Delay(msec);
 }
-
-void ms5849_delay_us(uint32_t usec){ //delay in microseconds
-    uint32_t start = __HAL_TIM_GET_COUNTER(&htim15);
-    while ((uint16_t)(__HAL_TIM_GET_COUNTER(&htim15) - start) < usec) { }
-}

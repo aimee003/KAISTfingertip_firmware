@@ -1,0 +1,7 @@
+../Core/Src/ForceSensor.cpp:4:1:ForceSensor::ForceSensor()	1
+../Core/Src/ForceSensor.cpp:16:8:int8_t ForceSensor::Initialize()	7
+../Core/Src/ForceSensor.cpp:93:8:int8_t ForceSensor::config_dev(ms5849_dev*)	1
+../Core/Src/ForceSensor.cpp:148:6:void ForceSensor::Sample()	9
+../Core/Src/ForceSensor.cpp:224:6:void ForceSensor::SamplePT()	1
+../Core/Src/ForceSensor.cpp:276:6:void ForceSensor::Evaluate()	14
+../Core/Src/ForceSensor.cpp:346:6:void ForceSensor::Calibrate()	4

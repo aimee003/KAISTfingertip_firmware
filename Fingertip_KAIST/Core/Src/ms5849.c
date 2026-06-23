@@ -110,8 +110,8 @@ int8_t ms5849_read_op_reg ( struct ms5849_dev *dev, uint8_t *fifo_int_th, uint8_
  *  It performs the selection of I2C/SPI read mechanism according to the
  *  selected interface and reads the chip-id and calibration data of the sensor.
  */
-static const uint8_t osr_delays_ms[] = { 1, 1, 2, 3, 5, 9, 17 };
-static const uint16_t osr_delays_us[] = { 330, 590, 1100, 2124, 4160, 8240, 16500 };
+static const uint8_t osr_delays[] = { 1, 1, 2, 3, 5, 9, 17 };
+
 
 int8_t ms5849_init(struct ms5849_dev *dev)
 {
@@ -363,7 +363,7 @@ int8_t ms5849_get_adc_data_press ( struct ms5849_dev *dev, uint32_t *pressure )
 	int8_t err_flag = ms5849_start_conversion( dev, MS5849_CNV_ADC_SEL_PRESS );
 
     // Conversion time delay
-	dev->delay_ms(osr_delays_ms[dev->osr_press]);
+	dev->delay_ms(osr_delays[dev->osr_press]);
 
     // Read pressure raw data
     err_flag |= ms5849_read_adc( dev, MS5849_CNV_ADC_SEL_PRESS, pressure );
@@ -376,7 +376,7 @@ int8_t ms5849_get_adc_data_temp ( struct ms5849_dev *dev, uint32_t *temperature 
 	int8_t err_flag = ms5849_start_conversion( dev, MS5849_CNV_ADC_SEL_TEMP );
 
     // Conversion time delay
-	dev->delay_ms(osr_delays_ms[dev->osr_temp]);
+	dev->delay_ms(osr_delays[dev->osr_temp]);
 
     // Read temperature raw data
     err_flag |= ms5849_read_adc( dev, MS5849_CNV_ADC_SEL_TEMP, temperature );
@@ -587,20 +587,3 @@ int8_t ms5849_read_config (  struct ms5849_dev *dev , uint8_t sel_cfg)
     return err_flag;
 }
 
-
-uint8_t ms5849_conversion_delay_ms(const struct ms5849_dev *dev)
-{
-    /* Worst-case conversion settling time (ms) for this device's OSR. */
-    uint8_t d = osr_delays_ms[dev->osr_press];
-    if (osr_delays_ms[dev->osr_temp] > d) d = osr_delays_ms[dev->osr_temp];
-    return d;
-}
-
-uint16_t ms5849_conversion_delay_us(const struct ms5849_dev *dev)
-{
-    /* Worst-case conversion settling time (us) for this device's OSR.
-       +100 us guard so a slightly slow conversion is never read early. */
-	uint16_t  d = osr_delays_us[dev->osr_press];
-    if (osr_delays_us[dev->osr_temp] > d) d = osr_delays_us[dev->osr_temp];
-    return d;
-}

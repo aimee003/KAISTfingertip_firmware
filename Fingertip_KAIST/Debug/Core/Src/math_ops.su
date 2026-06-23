@@ -1,0 +1,10 @@
+/opt/st/stm32cubeide_2.0.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.linux64_1.0.100.202509120712/tools/arm-none-eabi/include/c++/13.3.1/cmath:438:3:constexpr float std::sqrt(float)	16	static
+../Core/Src/math_ops.cpp:5:7:float fmaxf2(float, float)	16	static
+../Core/Src/math_ops.cpp:10:7:float fminf2(float, float)	16	static
+../Core/Src/math_ops.cpp:15:7:float fmaxf3(float, float, float)	24	static
+../Core/Src/math_ops.cpp:20:7:float fminf3(float, float, float)	24	static
+../Core/Src/math_ops.cpp:25:7:float roundfl(float)	16	static
+../Core/Src/math_ops.cpp:31:6:void limit_norm(float*, float*, float)	32	static
+../Core/Src/math_ops.cpp:40:6:void limit(float*, float, float)	24	static
+../Core/Src/math_ops.cpp:44:5:int float_to_uint(float, float, float, int)	32	static
+../Core/Src/math_ops.cpp:52:7:float uint_to_float(int, float, float, int)	32	static

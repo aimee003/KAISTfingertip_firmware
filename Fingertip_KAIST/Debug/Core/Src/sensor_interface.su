@@ -1,0 +1,7 @@
+../Core/Src/sensor_interface.cpp:13:16:int32_t CUSTOM_I2C_WriteReg(uint16_t, uint8_t*, uint16_t)	24	static
+../Core/Src/sensor_interface.cpp:17:16:int32_t CUSTOM_I2C_ReadReg(uint16_t, uint8_t*, uint16_t)	24	static
+../Core/Src/sensor_interface.cpp:21:16:int32_t CUSTOM_GetTick()	8	static
+../Core/Src/sensor_interface.cpp:25:16:int32_t CUSTOM_Init()	4	static
+../Core/Src/sensor_interface.cpp:29:16:int32_t CUSTOM_DeInit()	4	static
+../Core/Src/sensor_interface.cpp:34:16:int32_t Init_One_Sensor(int, uint16_t)	48	static
+../Core/Src/sensor_interface.cpp:87:9:int32_t TOF_Init()	8	static

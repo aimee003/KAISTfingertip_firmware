@@ -609,7 +609,6 @@ struct ms5849_dev {
 	ms5849_com_fptr_t write;
 	/*! Delay function pointer */
 	ms5849_delay_fptr_t delay_ms;
-	ms5849_delay_fptr_t delay_us;
 	/*! Trim data */
 	struct ms5849_calib_data calib_data;
 	/*! Sensor Settings */

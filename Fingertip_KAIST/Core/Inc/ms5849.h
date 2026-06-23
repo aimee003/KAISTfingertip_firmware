@@ -157,15 +157,6 @@ int8_t ms5849_read_config(struct ms5849_dev *dev, uint8_t sel_cfg);
  */
 int8_t ms5849_check_calib(const struct ms5849_dev *dev);
 
-/* --- batched-sampling support ---------------------------------------- */
-int8_t ms5849_start_conversion(struct ms5849_dev *dev, uint8_t sel_cnv);
-int8_t ms5849_read_adc(struct ms5849_dev *dev, uint8_t sel_data, uint32_t *adc_data);
-void   ms5849_compensate(struct ms5849_dev *dev, uint32_t d1, uint32_t d2,
-                         struct ms5849_data *comp_data);
-uint8_t ms5849_conversion_delay_ms(const struct ms5849_dev *dev);
-uint16_t ms5849_conversion_delay_us(const struct ms5849_dev *dev);
-
-
 #ifdef __cplusplus
 }
 #endif /* End of CPP guard */

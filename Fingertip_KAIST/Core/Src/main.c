@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "dma.h"
 #include "fdcan.h"
 #include "i2c.h"
 #include "spi.h"
@@ -93,7 +92,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_FDCAN2_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
@@ -102,6 +100,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM15_Init();
+
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start(&htim3);
@@ -125,8 +124,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 //	  HAL_Delay(250);
 //	  HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
-////	  for (int i = 0; i < 1000000; i++){}
-//
+//	  for (int i = 0; i < 1000000; i++){}
+
 //	  HAL_Delay(250);
 //	  HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
   }

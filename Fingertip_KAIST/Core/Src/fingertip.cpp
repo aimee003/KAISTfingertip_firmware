@@ -4,6 +4,7 @@
 #include "math.h"
 #include "ForceSensor.h"
 #include "neural_nets.h"
+#include "kaist_net.h"
 #include "ms5849.h"
 #include "ms5849_funcs.h"
 #include "neural_nets.h"
@@ -25,6 +26,8 @@
 int32_t pressure_raw[8];
 
 ForceSensor fingertip;
+
+nn_output_t nn;
 
 //TOF
 uint8_t range[9];
@@ -109,6 +112,36 @@ void pack_imu_reply(uint8_t * msg){
 	msg[4] = (yaw >> 8) & 0xFF;
 }
 
+void pack_nn_reply(uint8_t *msg1, uint8_t *msg2, uint8_t *msg3, nn_output_t * nn){
+    /// pack int16_t into the can buffer (can multiply by 10.0f for higher resolution (0.1deg)?) ///
+	//pack contact prob
+	msg1[1] = ((int)(1000.0f * nn->contact_prob)) & 0xFF;
+	msg1[0] = ((int)(1000.0f * nn->contact_prob) >> 8) & 0xFF;
+
+	msg2[1] = ((int)(1000.0f * nn->F[0])) & 0xFF;
+	msg2[0] = ((int)(1000.0f * nn->F[0]) >> 8) & 0xFF;
+	msg2[3] = ((int)(1000.0f * nn->F[1])) & 0xFF;
+	msg2[2] = ((int)(1000.0f * nn->F[1]) >> 8) & 0xFF;
+	msg2[5] = ((int)(1000.0f * nn->F[2])) & 0xFF;
+	msg2[4] = ((int)(1000.0f * nn->F[2]) >> 8) & 0xFF;
+
+	msg3[1] = ((int)(1000.0f * nn->u[0])) & 0xFF;
+	msg3[0] = ((int)(1000.0f * nn->u[0]) >> 8) & 0xFF;
+	msg3[3] = ((int)(1000.0f * nn->u[1])) & 0xFF;
+	msg3[2] = ((int)(1000.0f * nn->u[1]) >> 8) & 0xFF;
+	msg3[5] = ((int)(1000.0f * nn->u[2])) & 0xFF;
+	msg3[4] = ((int)(1000.0f * nn->u[2]) >> 8) & 0xFF;
+}
+
+
+//		    printf("%d,%d,%d,%d,%d,%d,%d\n\r",
+//		           (int)(nn.contact_prob>0.5),     // 0..1000
+//		           (int)(1000.0f * nn.F[0]),             // mN
+//		           (int)(1000.0f * nn.F[1]),
+//		           (int)(1000.0f * nn.F[2]),
+//		           (int)(1000.0f * nn.u[0]),             // micrometres
+//		           (int)(1000.0f * nn.u[1]),
+//		           (int)(1000.0f * nn.u[2]));
 // main CPP loop
 int fingertip_main(void){
 //
@@ -185,18 +218,18 @@ int fingertip_main(void){
 	txMsg_p4.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
 	txMsg_p4.MessageMarker = 0;
 
-//	printf("Starting Fingertip Main Code.\n");
+	printf("Starting Fingertip Main Code.\n");
 	// Configure FDCAN filter
 	if (HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filt) != HAL_OK)
 	{
-//		printf("Failed to configure FDCAN filter.\n");
+		printf("Failed to configure FDCAN filter.\n");
 		while(1);
 	}
 
 	// Start FDCAN
 	if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
 	{
-//		printf("Failed to start FDCAN.\n");
+		printf("Failed to start FDCAN.\n");
 		while(1);
 	}
 
@@ -209,20 +242,27 @@ int fingertip_main(void){
 
 	// initialize force sensor
 	int8_t init_status_fs = fingertip.Initialize();
+	nn_reset();
 	if (init_status_fs != 0) {
-//		printf("Force Sensor Init Failed! Status: %ld\n", init_status_fs);
+		printf("Force Sensor Init Failed! Status: %ld\n", init_status_fs);
 		Error_Handler();
 	} else {
-//		printf("Force Sensor  Init Successful!\n");
+		printf("Force Sensor  Init Successful!\n");
 	}
 //	HAL_Delay(10);
 
+	float worst;
+	int ok = nn_selftest(&worst);
+	if (!ok) {
+		printf("NN Self Test Failed!");
+		Error_Handler();}
+
 	int32_t init_status_tof = TOF_Init();
 	if (init_status_tof != 0) {
-//		printf("TOF Init Failed! Status: %ld\n", init_status_tof);
+		printf("TOF Init Failed! Status: %ld\n", init_status_tof);
 		Error_Handler();
 	} else {
-//		printf("TOF Init Successful!\n");
+		printf("TOF Init Successful!\n");
 	}
 //	HAL_Delay(100);
 
@@ -231,16 +271,17 @@ int fingertip_main(void){
 //	HAL_Delay(200);
 	init_status_imu &= BNO080_enableRotationVector(2500);
 	if (init_status_imu != 0) {
-//		printf("IMU Init Failed! Status: %ld\n", init_status_imu);
+		printf("IMU Init Failed! Status: %ld\n", init_status_imu);
 		Error_Handler();
 	} else {
-//		printf("IMU Init Successful!\n");
+		printf("IMU Init Successful!\n");
 	}
 //	HAL_Delay(100);
 
 	uint32_t last_hz_print = HAL_GetTick();
 	uint32_t loop_counter = 0;
 	uint32_t eval_time = 0;
+	uint32_t eval_time_nn = 0;
 //	uint32_t timer = 0;
 
 	while (1) {
@@ -272,7 +313,7 @@ int fingertip_main(void){
 			uint32_t start_time = __HAL_TIM_GET_COUNTER(&htim15);
 			loop_counter++;
 			if (HAL_GetTick() - last_hz_print >= 1000) {
-//				printf("Loop Rate: %lu Hz, Eval Time: %lu us\n\r", loop_counter, eval_time);
+				printf("Loop Rate: %lu Hz, Eval Time: %lu us, Eval Time nn: %lu us\n\r", loop_counter, eval_time, eval_time_nn);
 				loop_counter = 0;
 				last_hz_print = HAL_GetTick();
 			}
@@ -306,9 +347,33 @@ int fingertip_main(void){
 			// sample pressure sensors
 			fingertip.Sample();
 
+		    /* --- tactile inference ------------------------------------------------
+		     * The net was trained on ForceSensor::raw_data[] -- the SAME array that
+		     * pack_pressure_reply() transmits. Not offset_data[]. See kaist_net.h.  */
+		    static float taxels[NN_N_TAXEL];
+		    for (int i = 0; i < NN_N_TAXEL; ++i)
+		        taxels[i] = (float)fingertip.raw_data[i];
+		    nn_push(taxels);
+
+//		    static nn_output_t nn;          /* stale until the first successful infer */
+		    uint32_t start_time_nn = __HAL_TIM_GET_COUNTER(&htim15);
+		    nn_infer(&nn);                  /* returns 0 for the first NN_HISTORY ticks */
+		    eval_time_nn = __HAL_TIM_GET_COUNTER(&htim15) - start_time_nn;
+		    /* nn.contact_prob  in [0,1]
+		     * nn.F[3]          Fx, Fy, Fz  [N]
+		     * nn.u[3]          contact point on the superellipsoid  [mm]            */
+//		    printf("%d,%d,%d,%d,%d,%d,%d\n\r",
+//		           (int)(nn.contact_prob>0.5),     // 0..1000
+//		           (int)(1000.0f * nn.F[0]),             // mN
+//		           (int)(1000.0f * nn.F[1]),
+//		           (int)(1000.0f * nn.F[2]),
+//		           (int)(1000.0f * nn.u[0]),             // micrometres
+//		           (int)(1000.0f * nn.u[1]),
+//		           (int)(1000.0f * nn.u[2]));
 
 	        // pack and send CAN messages
 	        pack_pressure_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, txMsg_p4_data, &fingertip);
+	        pack_nn_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, &nn);
 	        pack_tof_reply(txMsg_t1_data);
 	        pack_imu_reply(txMsg_i1_data);
 
@@ -432,13 +497,14 @@ int fingertip_main(void){
 //	        }
 
 
-//			printf("Pressure: %03d,%03d,%03d,%03d,%03d,%03d,%03d,%03d \n\r", fingertip.raw_data[0],fingertip.raw_data[1],fingertip.raw_data[2],
-//						fingertip.raw_data[3],fingertip.raw_data[4],fingertip.raw_data[5],fingertip.raw_data[6],fingertip.raw_data[7]);
+			printf("Pressure: %03d,%03d,%03d,%03d,%03d,%03d,%03d,%03d \n\r", fingertip.raw_data[0],fingertip.raw_data[1],fingertip.raw_data[2],
+						fingertip.raw_data[3],fingertip.raw_data[4],fingertip.raw_data[5],fingertip.raw_data[6],fingertip.raw_data[7]);
 //			printf("TOF: %03d,%03d,%03d,%03d,%03d\n\r", range[0], range[1], range[2], range[3], range[4]);
 //			printf("IMU: %03d,%03d,%03d\n\r", BNO080_Roll, BNO080_Pitch, BNO080_Yaw);
 //			printf("\n\r\n\r");
-//			printf("Force: %d,%d,%d\n\r", (int)(1000.0f*fingertip.output_data[0]), (int)(1000.0f*fingertip.output_data[1]), (int)(1000.0f*fingertip.output_data[2]));
-//			printf("Angle: %d,%d\n\r\n\r", (int)(fingertip.output_data[3]), (int)(fingertip.output_data[4]));
+//			printf("Probability: %d\n\r", (int)(nn.contact_prob>0.5));
+//			printf("Force: %d,%d,%d\n\r", (int)(1000.0f*nn.F[0]), (int)(1000.0f*nn.F[1]), (int)(1000.0f*nn.F[2]));
+//			printf("Position: %d,%d,%d\n\r\n\r", (int)(nn.u[0]), (int)(nn.u[1]), (int)(nn.u[2]));
 
 		}
 

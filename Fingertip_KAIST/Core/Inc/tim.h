@@ -39,7 +39,7 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim15;
 
 /* USER CODE BEGIN Private defines */
-extern uint8_t sample_flag;
+extern volatile uint8_t sample_flag;
 
 /* USER CODE END Private defines */
 

@@ -1,12 +1,12 @@
 vl53l4cd_api.c:134:16:VL53L4CD_GetSWVersion	1
 vl53l4cd_api.c:146:16:VL53L4CD_SetI2CAddress	1
 vl53l4cd_api.c:157:16:VL53L4CD_GetSensorId	1
-vl53l4cd_api.c:167:16:VL53L4CD_SensorInit	8
 vl53l4cd_api.c:238:16:VL53L4CD_ClearInterrupt	1
 vl53l4cd_api.c:247:16:VL53L4CD_StartRanging	2
 vl53l4cd_api.c:269:16:VL53L4CD_StopRanging	1
-vl53l4cd_api.c:278:16:VL53L4CD_CheckForDataReady	3
-vl53l4cd_api.c:313:16:VL53L4CD_SetRangeTiming	10
+vl53l4cd_api.c:278:16:VL53L4CD_CheckForDataReady	1
+vl53l4cd_api.c:313:16:VL53L4CD_SetRangeTiming	11
+vl53l4cd_api.c:167:16:VL53L4CD_SensorInit	6
 vl53l4cd_api.c:402:16:VL53L4CD_GetRangeTiming	3
 vl53l4cd_api.c:459:16:VL53L4CD_GetResult	2
 vl53l4cd_api.c:507:16:VL53L4CD_SetOffset	1

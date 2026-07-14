@@ -1,0 +1,5 @@
+kaist_net.c:3872:13:dense.constprop	21
+kaist_net.c:3937:6:nn_forward_raw	11
+kaist_net.c:3968:6:nn_reset	1
+kaist_net.c:3970:6:nn_push	2
+kaist_net.c:3977:5:nn_infer	3

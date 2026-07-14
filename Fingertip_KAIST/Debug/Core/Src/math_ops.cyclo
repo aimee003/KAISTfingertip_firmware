@@ -1,8 +1,7 @@
-cmath:463:3:constexpr float std::sqrt(float)	1
-math_ops.cpp:5:7:float fmaxf2(float, float)	2
-math_ops.cpp:10:7:float fminf2(float, float)	2
-math_ops.cpp:15:7:float fmaxf3(float, float, float)	4
-math_ops.cpp:20:7:float fminf3(float, float, float)	4
+math_ops.cpp:5:7:float fmaxf2(float, float)	1
+math_ops.cpp:10:7:float fminf2(float, float)	1
+math_ops.cpp:15:7:float fmaxf3(float, float, float)	2
+math_ops.cpp:20:7:float fminf3(float, float, float)	2
 math_ops.cpp:25:7:float roundfl(float)	2
 math_ops.cpp:31:6:void limit_norm(float*, float*, float)	2
 math_ops.cpp:40:6:void limit(float*, float, float)	1

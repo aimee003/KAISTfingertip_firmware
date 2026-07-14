@@ -21,7 +21,7 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
-uint8_t sample_flag;
+volatile uint8_t sample_flag;
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;

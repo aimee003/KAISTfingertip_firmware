@@ -38,8 +38,8 @@ Core/Src/fingertip.o: ../Core/Src/fingertip.cpp ../Core/Inc/BNO080.h \
  ../Core/Inc/printing.h ../Core/Inc/ForceSensor.h ../Core/Inc/printing.h \
  ../Core/Inc/neural_nets.h ../Core/Inc/ms5849.h ../Core/Inc/ms5849_defs.h \
  ../Core/Inc/ms5849_funcs.h ../Core/Inc/neural_nets.h \
- ../Core/Inc/ms5849.h ../Core/Inc/ms5849_funcs.h ../Core/Inc/math_ops.h \
- ../Core/Inc/sensor_interface.h \
+ ../Core/Inc/kaist_net.h ../Core/Inc/ms5849.h ../Core/Inc/ms5849_funcs.h \
+ ../Core/Inc/math_ops.h ../Core/Inc/sensor_interface.h \
  ../Core/Inc/../../Drivers/vl53l4cd/vl53l4cd.h ../Core/Inc/Quaternion.h
 ../Core/Inc/BNO080.h:
 ../Core/Inc/main.h:
@@ -91,6 +91,7 @@ Core/Src/fingertip.o: ../Core/Src/fingertip.cpp ../Core/Inc/BNO080.h \
 ../Core/Inc/ms5849_defs.h:
 ../Core/Inc/ms5849_funcs.h:
 ../Core/Inc/neural_nets.h:
+../Core/Inc/kaist_net.h:
 ../Core/Inc/ms5849.h:
 ../Core/Inc/ms5849_funcs.h:
 ../Core/Inc/math_ops.h:

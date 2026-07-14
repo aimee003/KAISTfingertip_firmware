@@ -91,7 +91,7 @@ int32_t TOF_Init(void) {
     HAL_GPIO_WritePin(TOF_XSHUT_3_GPIO_Port, TOF_XSHUT_3_Pin, GPIO_PIN_RESET);
     HAL_Delay(10);
 
-//    /* 2. Init Sensor 1 (Addr 0x54) */
+    /* 2. Init Sensor 1 (Addr 0x54) */
 //    HAL_GPIO_WritePin(TOF_XSHUT_1_GPIO_Port, TOF_XSHUT_1_Pin, GPIO_PIN_SET);
 //    HAL_Delay(5);
 //    if (Init_One_Sensor(0, 0x54) != 0) return -1;

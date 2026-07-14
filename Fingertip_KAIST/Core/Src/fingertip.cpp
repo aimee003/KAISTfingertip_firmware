@@ -27,7 +27,7 @@ int32_t pressure_raw[8];
 ForceSensor fingertip;
 
 //TOF
-int range[9];
+uint8_t range[9];
 
 //IMU
 float q[4];
@@ -90,16 +90,23 @@ void pack_pressure_reply(uint8_t *msg1, uint8_t *msg2, uint8_t *msg3, uint8_t *m
 
 void pack_tof_reply(uint8_t * msg){
     /// pack ints into the can buffer ///
-    msg[0] = range[0]; // top left
-    msg[1] = range[1]; // front left
-    msg[2] = range[2]; // top right
+//    msg[0] = range[0]; // no longer used
+    msg[0] = range[1]; // i forgor, i must check later
+    msg[1] = range[2]; // top right
 }
 
 void pack_imu_reply(uint8_t * msg){
-    /// pack ints into the can buffer ///
-    msg[0] = BNO080_Roll; // top left
-    msg[1] = BNO080_Pitch; // front left
-    msg[2] = BNO080_Yaw; // top right
+    /// pack int16_t into the can buffer (can multiply by 10.0f for higher resolution (0.1deg)?) ///
+	int16_t roll  = (int16_t)lroundf(BNO080_Roll);
+	int16_t pitch = (int16_t)lroundf(BNO080_Pitch);
+	int16_t yaw   = (int16_t)lroundf(BNO080_Yaw);
+
+	msg[1] = roll & 0xFF;
+	msg[0] = (roll >> 8) & 0xFF;
+	msg[3] = pitch & 0xFF;
+	msg[2] = (pitch >> 8) & 0xFF;
+	msg[5] = yaw & 0xFF;
+	msg[4] = (yaw >> 8) & 0xFF;
 }
 
 // main CPP loop
@@ -265,7 +272,7 @@ int fingertip_main(void){
 			uint32_t start_time = __HAL_TIM_GET_COUNTER(&htim15);
 			loop_counter++;
 			if (HAL_GetTick() - last_hz_print >= 1000) {
-				printf("Loop Rate: %lu Hz, Eval Time: %lu us\n\r", loop_counter, eval_time);
+//				printf("Loop Rate: %lu Hz, Eval Time: %lu us\n\r", loop_counter, eval_time);
 				loop_counter = 0;
 				last_hz_print = HAL_GetTick();
 			}
@@ -283,6 +290,7 @@ int fingertip_main(void){
 //					printf("Sensor %d: %lu mm\n\r", i , range[i]);
 				}
 			}
+//			printf("Sensor 1: %lu mm\n\r, Sensor 2: %lu mm\n\r", range[1], range[2]);
 			if(BNO080_dataAvailable() == 1)
 			  {
 				  q[0] = BNO080_getQuatI();
@@ -302,6 +310,7 @@ int fingertip_main(void){
 	        // pack and send CAN messages
 	        pack_pressure_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, txMsg_p4_data, &fingertip);
 	        pack_tof_reply(txMsg_t1_data);
+	        pack_imu_reply(txMsg_i1_data);
 
 	    	// sending FDCAN messages
 	        // Helper lambda or function to send with wait
@@ -317,11 +326,12 @@ int fingertip_main(void){
 				HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
 	        };
 
-	        send_can(&txMsg_t1, txMsg_t1_data);
-	        send_can(&txMsg_p1, txMsg_p1_data);
-	        send_can(&txMsg_p2, txMsg_p2_data);
-	        send_can(&txMsg_p3, txMsg_p3_data);
-	        send_can(&txMsg_p4, txMsg_p4_data);
+//	        send_can(&txMsg_t1, txMsg_t1_data);
+//	        send_can(&txMsg_i1, txMsg_i1_data);
+//	        send_can(&txMsg_p1, txMsg_p1_data);
+//	        send_can(&txMsg_p2, txMsg_p2_data);
+//	        send_can(&txMsg_p3, txMsg_p3_data);
+//	        send_can(&txMsg_p4, txMsg_p4_data);
 
 	        eval_time = __HAL_TIM_GET_COUNTER(&htim15) - start_time;
 

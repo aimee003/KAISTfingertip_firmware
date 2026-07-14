@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (13.3.rel1)
+# Toolchain: GNU Tools for STM32 (10.3-2021.10)
 ################################################################################
 
 -include ../makefile.init
@@ -87,8 +87,8 @@ all: main-build
 main-build: Fingertip_KAIST.elf secondary-outputs
 
 # Tool invocations
-Fingertip_KAIST.elf Fingertip_KAIST.map: $(OBJS) $(USER_OBJS) /home/lianexu/Documents/Projects/KAISTfingertip_firmware/Fingertip_KAIST/STM32G491CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "Fingertip_KAIST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/lianexu/Documents/Projects/KAISTfingertip_firmware/Fingertip_KAIST/STM32G491CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Fingertip_KAIST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Fingertip_KAIST.elf Fingertip_KAIST.map: $(OBJS) $(USER_OBJS) C:\Users\liuai\BRL\KAISTfingertip_firmware\Fingertip_KAIST\STM32G491CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "Fingertip_KAIST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\liuai\BRL\KAISTfingertip_firmware\Fingertip_KAIST\STM32G491CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Fingertip_KAIST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

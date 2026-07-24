@@ -30,7 +30,7 @@ ForceSensor fingertip;
 nn_output_t nn;
 
 //TOF
-uint8_t range[9];
+uint16_t range[9];
 
 //IMU
 float q[4];
@@ -53,84 +53,42 @@ uint8_t txMsg_p4_data[8];
 
 #define HEADER_Serial 0xAA
 
-void pack_pressure_reply(uint8_t *msg1, uint8_t *msg2, uint8_t *msg3, uint8_t *msg4, ForceSensor * fs){
-     msg1[3] = fs->raw_data[0]&0xFF;
-     msg1[2] = (fs->raw_data[0]>>8)&0xFF;
-     msg1[1] = (fs->raw_data[0]>>16)&0xFF;
-     msg1[0] = (fs->raw_data[0]>>24)&0xFF;
-     msg1[7] = fs->raw_data[1]&0xFF;
-     msg1[6] = (fs->raw_data[1]>>8)&0xFF;
-     msg1[5] = (fs->raw_data[1]>>16)&0xFF;
-     msg1[4] = (fs->raw_data[1]>>24)&0xFF;
+#define FINGER_MSG_ID   (0x10 + (SELECTED_FINGER - 1))  // one ID per finger
+#define FINGER_MSG_LEN  24                              // 22 used + 2 pad
 
-     msg2[3] = fs->raw_data[2]&0xFF;
-     msg2[2] = (fs->raw_data[2]>>8)&0xFF;
-     msg2[1] = (fs->raw_data[2]>>16)&0xFF;
-     msg2[0] = (fs->raw_data[2]>>24)&0xFF;
-     msg2[7] = fs->raw_data[3]&0xFF;
-     msg2[6] = (fs->raw_data[3]>>8)&0xFF;
-     msg2[5] = (fs->raw_data[3]>>16)&0xFF;
-     msg2[4] = (fs->raw_data[3]>>24)&0xFF;
+FDCAN_TxHeaderTypeDef txMsg_all;
+uint8_t txMsg_all_data[FINGER_MSG_LEN];
 
-     msg3[3] = fs->raw_data[4]&0xFF;
-     msg3[2] = (fs->raw_data[4]>>8)&0xFF;
-     msg3[1] = (fs->raw_data[4]>>16)&0xFF;
-     msg3[0] = (fs->raw_data[4]>>24)&0xFF;
-     msg3[7] = fs->raw_data[5]&0xFF;
-     msg3[6] = (fs->raw_data[5]>>8)&0xFF;
-     msg3[5] = (fs->raw_data[5]>>16)&0xFF;
-     msg3[4] = (fs->raw_data[5]>>24)&0xFF;
-
-     msg4[3] = fs->raw_data[6]&0xFF;
-     msg4[2] = (fs->raw_data[6]>>8)&0xFF;
-     msg4[1] = (fs->raw_data[6]>>16)&0xFF;
-     msg4[0] = (fs->raw_data[6]>>24)&0xFF;
-     msg4[7] = fs->raw_data[7]&0xFF;
-     msg4[6] = (fs->raw_data[7]>>8)&0xFF;
-     msg4[5] = (fs->raw_data[7]>>16)&0xFF;
-     msg4[4] = (fs->raw_data[7]>>24)&0xFF;
+/* big-endian, saturating — matches the byte order of your existing packers */
+static inline void put_i16(uint8_t *p, int32_t v){
+    if (v >  32767) v =  32767;
+    if (v < -32768) v = -32768;
+    p[0] = (uint8_t)((v >> 8) & 0xFF);
+    p[1] = (uint8_t)( v       & 0xFF);
 }
+static inline int32_t q1000(float x){ return (int32_t)lroundf(1000.0f * x); }
 
-void pack_tof_reply(uint8_t * msg){
-    /// pack ints into the can buffer ///
-//    msg[0] = range[0]; // no longer used
-    msg[0] = range[1]; // i forgor, i must check later
-    msg[1] = range[2]; // top right
-}
-
-void pack_imu_reply(uint8_t * msg){
-    /// pack int16_t into the can buffer (can multiply by 10.0f for higher resolution (0.1deg)?) ///
-	int16_t roll  = (int16_t)lroundf(BNO080_Roll);
-	int16_t pitch = (int16_t)lroundf(BNO080_Pitch);
-	int16_t yaw   = (int16_t)lroundf(BNO080_Yaw);
-
-	msg[1] = roll & 0xFF;
-	msg[0] = (roll >> 8) & 0xFF;
-	msg[3] = pitch & 0xFF;
-	msg[2] = (pitch >> 8) & 0xFF;
-	msg[5] = yaw & 0xFF;
-	msg[4] = (yaw >> 8) & 0xFF;
-}
-
-void pack_nn_reply(uint8_t *msg1, uint8_t *msg2, uint8_t *msg3, nn_output_t * nn){
-    /// pack int16_t into the can buffer (can multiply by 10.0f for higher resolution (0.1deg)?) ///
-	//pack contact prob
-	msg1[1] = ((int)(1000.0f * nn->contact_prob)) & 0xFF;
-	msg1[0] = ((int)(1000.0f * nn->contact_prob) >> 8) & 0xFF;
-
-	msg2[1] = ((int)(1000.0f * nn->F[0])) & 0xFF;
-	msg2[0] = ((int)(1000.0f * nn->F[0]) >> 8) & 0xFF;
-	msg2[3] = ((int)(1000.0f * nn->F[1])) & 0xFF;
-	msg2[2] = ((int)(1000.0f * nn->F[1]) >> 8) & 0xFF;
-	msg2[5] = ((int)(1000.0f * nn->F[2])) & 0xFF;
-	msg2[4] = ((int)(1000.0f * nn->F[2]) >> 8) & 0xFF;
-
-	msg3[1] = ((int)(1000.0f * nn->u[0])) & 0xFF;
-	msg3[0] = ((int)(1000.0f * nn->u[0]) >> 8) & 0xFF;
-	msg3[3] = ((int)(1000.0f * nn->u[1])) & 0xFF;
-	msg3[2] = ((int)(1000.0f * nn->u[1]) >> 8) & 0xFF;
-	msg3[5] = ((int)(1000.0f * nn->u[2])) & 0xFF;
-	msg3[4] = ((int)(1000.0f * nn->u[2]) >> 8) & 0xFF;
+void pack_all_reply(uint8_t *msg, const nn_output_t *nn){
+    /*  0- 1  contact prob   x1000  (0..1000)
+     *  2- 7  Fx,Fy,Fz       x1000  [mN]
+     *  8-13  ux,uy,uz       x1000  [um]
+     * 14-15  ToF range[1], range[2]  [mm]
+     * 16-21  roll,pitch,yaw          [deg]
+     * 22-23  reserved                                        */
+    put_i16(&msg[0],  q1000(nn->contact_prob));
+    put_i16(&msg[2],  q1000(nn->F[0]));
+    put_i16(&msg[4],  q1000(nn->F[1]));
+    put_i16(&msg[6],  q1000(nn->F[2]));
+    put_i16(&msg[8],  q1000(nn->u[0]));
+    put_i16(&msg[10], q1000(nn->u[1]));
+    put_i16(&msg[12], q1000(nn->u[2]));
+//    msg[14] = range[1];
+//    msg[15] = range[2];
+    put_i16(&msg[14], range[1]);
+    put_i16(&msg[16], range[2]);
+    put_i16(&msg[18], (int32_t)lroundf(BNO080_Roll));
+    put_i16(&msg[20], (int32_t)lroundf(BNO080_Pitch));
+    put_i16(&msg[22], (int32_t)lroundf(BNO080_Yaw));
 }
 
 
@@ -158,65 +116,15 @@ int fingertip_main(void){
 	can_filt.FilterID2 = 0x0000;  // Mask (0 = don't care)
 
 	// Configure FDCAN Tx headers
-	txMsg_t1.Identifier = PR_TOF;
-	txMsg_t1.IdType = FDCAN_STANDARD_ID;
-	txMsg_t1.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_t1.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_t1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_t1.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_t1.FDFormat = FDCAN_FD_CAN;
-	txMsg_t1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_t1.MessageMarker = 0;
-
-	txMsg_i1.Identifier = PR_IMU;
-	txMsg_i1.IdType = FDCAN_STANDARD_ID;
-	txMsg_i1.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_i1.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_i1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_i1.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_i1.FDFormat = FDCAN_FD_CAN;
-	txMsg_i1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_i1.MessageMarker = 0;
-
-	txMsg_p1.Identifier = PR_1;
-	txMsg_p1.IdType = FDCAN_STANDARD_ID;
-	txMsg_p1.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_p1.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_p1.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p1.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_p1.FDFormat = FDCAN_FD_CAN;
-	txMsg_p1.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_p1.MessageMarker = 0;
-
-	txMsg_p2.Identifier = PR_2;
-	txMsg_p2.IdType = FDCAN_STANDARD_ID;
-	txMsg_p2.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_p2.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_p2.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p2.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_p2.FDFormat = FDCAN_FD_CAN;
-	txMsg_p2.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_p2.MessageMarker = 0;
-
-	txMsg_p3.Identifier = PR_3;
-	txMsg_p3.IdType = FDCAN_STANDARD_ID;
-	txMsg_p3.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_p3.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_p3.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p3.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_p3.FDFormat = FDCAN_FD_CAN;
-	txMsg_p3.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_p3.MessageMarker = 0;
-
-	txMsg_p4.Identifier = PR_4;
-	txMsg_p4.IdType = FDCAN_STANDARD_ID;
-	txMsg_p4.TxFrameType = FDCAN_DATA_FRAME;
-	txMsg_p4.DataLength = FDCAN_DLC_BYTES_8;
-	txMsg_p4.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	txMsg_p4.BitRateSwitch = FDCAN_BRS_ON;
-	txMsg_p4.FDFormat = FDCAN_FD_CAN;
-	txMsg_p4.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	txMsg_p4.MessageMarker = 0;
+	txMsg_all.Identifier          = FINGER_MSG_ID;
+	txMsg_all.IdType              = FDCAN_STANDARD_ID;
+	txMsg_all.TxFrameType         = FDCAN_DATA_FRAME;
+	txMsg_all.DataLength          = FDCAN_DLC_BYTES_24;
+	txMsg_all.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+	txMsg_all.BitRateSwitch       = FDCAN_BRS_ON;
+	txMsg_all.FDFormat            = FDCAN_FD_CAN;
+	txMsg_all.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
+	txMsg_all.MessageMarker       = 0;
 
 //	printf("Starting Fingertip Main Code.\n");
 	// Configure FDCAN filter
@@ -242,10 +150,10 @@ int fingertip_main(void){
 
 	// initialize force sensor
 	int8_t init_status_fs = fingertip.Initialize();
-	printf("Calibrating...");
+//	printf("Calibrating...");
 	fingertip.Calibrate();
-	printf("Done.");
-	nn_reset();
+//	printf("Done.");
+//	nn_reset();
 	if (init_status_fs != 0) {
 		printf("Force Sensor Init Failed! Status: %ld\n", init_status_fs);
 		Error_Handler();
@@ -334,7 +242,7 @@ int fingertip_main(void){
 //					printf("Sensor %d: %lu mm\n\r", i , range[i]);
 				}
 			}
-//			printf("Sensor 1: %lu mm\n\r, Sensor 2: %lu mm\n\r", range[1], range[2]);
+			printf("Sensor 1: %lu mm, Sensor 2: %lu mm\n\r", range[1], range[2]);
 			if(BNO080_dataAvailable() == 1)
 			  {
 				  q[0] = BNO080_getQuatI();
@@ -375,10 +283,7 @@ int fingertip_main(void){
 //		           (int)(1000.0f * nn.u[2]));
 
 	        // pack and send CAN messages
-//	        pack_pressure_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, txMsg_p4_data, &fingertip);
-	        pack_nn_reply(txMsg_p1_data, txMsg_p2_data, txMsg_p3_data, &nn);
-	        pack_tof_reply(txMsg_t1_data);
-	        pack_imu_reply(txMsg_i1_data);
+		    pack_all_reply(txMsg_all_data, &nn);
 
 	    	// sending FDCAN messages
 	        // Helper lambda or function to send with wait
@@ -394,12 +299,7 @@ int fingertip_main(void){
 				HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
 	        };
 
-//	        send_can(&txMsg_t1, txMsg_t1_data);
-//	        send_can(&txMsg_i1, txMsg_i1_data);
-//	        send_can(&txMsg_p1, txMsg_p1_data);
-//	        send_can(&txMsg_p2, txMsg_p2_data);
-//	        send_can(&txMsg_p3, txMsg_p3_data);
-//	        send_can(&txMsg_p4, txMsg_p4_data);
+	        send_can(&txMsg_all, txMsg_all_data);
 
 	        eval_time = __HAL_TIM_GET_COUNTER(&htim15) - start_time;
 
@@ -514,31 +414,31 @@ int fingertip_main(void){
 //			printf("Position: %d,%d,%d\n\r\n\r", (int)(nn.u[0]), (int)(nn.u[1]), (int)(nn.u[2]));
 //			printf(%d, %d.%02d, )
 
-			int whole[7];
-			int frac[7];
-			const char * sgn[7];
-			whole[0] = (int) nn.contact_prob;
-			frac[0] = (int)((nn.contact_prob - whole[0]) * 100);
-			for (int i = 0; i < 3; ++i) {
-				sgn[i+1] = (nn.F[i] < 0.0f) ? "-" : "";
-				whole[i+1] = (int) nn.F[i];
-				frac[i+1] = (int)((nn.F[i] - whole[i+1]) * 100);
-				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
-				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
-			}
-			for (int i = 0; i < 3; ++i) {
-				sgn[i+4] = (nn.u[i] < 0.0f) ? "-" : "";
-				whole[i+4] = (int) nn.u[i];
-				frac[i+4] = (int)((nn.u[i] - whole[i+4]) * 100);
-				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
-				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
-			}
-
-	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
-	        	HAL_GetTick(),
-				whole[0], frac[0],
-				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
-				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
+//			int whole[7];
+//			int frac[7];
+//			const char * sgn[7];
+//			whole[0] = (int) nn.contact_prob;
+//			frac[0] = (int)((nn.contact_prob - whole[0]) * 100);
+//			for (int i = 0; i < 3; ++i) {
+//				sgn[i+1] = (nn.F[i] < 0.0f) ? "-" : "";
+//				whole[i+1] = (int) nn.F[i];
+//				frac[i+1] = (int)((nn.F[i] - whole[i+1]) * 100);
+//				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
+//				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
+//			}
+//			for (int i = 0; i < 3; ++i) {
+//				sgn[i+4] = (nn.u[i] < 0.0f) ? "-" : "";
+//				whole[i+4] = (int) nn.u[i];
+//				frac[i+4] = (int)((nn.u[i] - whole[i+4]) * 100);
+//				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
+//				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
+//			}
+//
+//	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
+//	        	HAL_GetTick(),
+//				whole[0], frac[0],
+//				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
+//				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
 
 		}
 

@@ -1,5 +1,7 @@
-Core/Src/fingertip.o: ../Core/Src/fingertip.cpp ../Core/Inc/BNO080.h \
- ../Core/Inc/main.h ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h \
+Core/Src/sample.o: ../Core/Src/sample.cpp ../Core/Inc/sample.h \
+ ../Core/Inc/kaist_net.h ../Core/Inc/sensor_interface.h \
+ ../Core/Inc/../../Drivers/vl53l4cd/vl53l4cd.h ../Core/Inc/ForceSensor.h \
+ ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h \
  ../Core/Inc/stm32g4xx_hal_conf.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_rcc.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_def.h \
@@ -33,18 +35,17 @@ Core/Src/fingertip.o: ../Core/Src/fingertip.cpp ../Core/Inc/BNO080.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
- ../Core/Inc/spi.h ../Core/Inc/fingertip.h ../Core/Inc/fdcan.h \
- ../Core/Inc/tim.h ../Core/Inc/usart.h ../Core/Inc/gpio.h \
- ../Core/Inc/printing.h ../Core/Inc/ForceSensor.h ../Core/Inc/printing.h \
- ../Core/Inc/neural_nets.h ../Core/Inc/ms5849.h ../Core/Inc/ms5849_defs.h \
- ../Core/Inc/ms5849_funcs.h ../Core/Inc/neural_nets.h \
- ../Core/Inc/kaist_net.h ../Core/Inc/ms5849.h ../Core/Inc/ms5849_funcs.h \
- ../Core/Inc/math_ops.h ../Core/Inc/sensor_interface.h \
- ../Core/Inc/../../Drivers/vl53l4cd/vl53l4cd.h ../Core/Inc/Quaternion.h \
- ../Core/Inc/sample.h ../Core/Inc/kaist_net.h \
- ../Core/Inc/sensor_interface.h
-../Core/Inc/BNO080.h:
-../Core/Inc/main.h:
+ ../Core/Inc/usart.h ../Core/Inc/main.h ../Core/Inc/gpio.h \
+ ../Core/Inc/tim.h ../Core/Inc/printing.h ../Core/Inc/neural_nets.h \
+ ../Core/Inc/ms5849.h ../Core/Inc/ms5849_defs.h \
+ ../Core/Inc/ms5849_funcs.h ../Core/Inc/spi.h ../Core/Inc/BNO080.h \
+ ../Core/Inc/Quaternion.h ../Core/Inc/sensor_interface.h \
+ ../Core/Inc/kaist_net.h ../Core/Inc/printing.h ../Core/Inc/main.h
+../Core/Inc/sample.h:
+../Core/Inc/kaist_net.h:
+../Core/Inc/sensor_interface.h:
+../Core/Inc/../../Drivers/vl53l4cd/vl53l4cd.h:
+../Core/Inc/ForceSensor.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
 ../Core/Inc/stm32g4xx_hal_conf.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_rcc.h:
@@ -79,27 +80,19 @@ Core/Src/fingertip.o: ../Core/Src/fingertip.cpp ../Core/Inc/BNO080.h \
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h:
-../Core/Inc/spi.h:
-../Core/Inc/fingertip.h:
-../Core/Inc/fdcan.h:
-../Core/Inc/tim.h:
 ../Core/Inc/usart.h:
+../Core/Inc/main.h:
 ../Core/Inc/gpio.h:
-../Core/Inc/printing.h:
-../Core/Inc/ForceSensor.h:
+../Core/Inc/tim.h:
 ../Core/Inc/printing.h:
 ../Core/Inc/neural_nets.h:
 ../Core/Inc/ms5849.h:
 ../Core/Inc/ms5849_defs.h:
 ../Core/Inc/ms5849_funcs.h:
-../Core/Inc/neural_nets.h:
-../Core/Inc/kaist_net.h:
-../Core/Inc/ms5849.h:
-../Core/Inc/ms5849_funcs.h:
-../Core/Inc/math_ops.h:
-../Core/Inc/sensor_interface.h:
-../Core/Inc/../../Drivers/vl53l4cd/vl53l4cd.h:
+../Core/Inc/spi.h:
+../Core/Inc/BNO080.h:
 ../Core/Inc/Quaternion.h:
-../Core/Inc/sample.h:
-../Core/Inc/kaist_net.h:
 ../Core/Inc/sensor_interface.h:
+../Core/Inc/kaist_net.h:
+../Core/Inc/printing.h:
+../Core/Inc/main.h:

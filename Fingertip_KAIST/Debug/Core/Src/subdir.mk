@@ -10,6 +10,7 @@ CPP_SRCS += \
 ../Core/Src/fingertip_net.cpp \
 ../Core/Src/math_ops.cpp \
 ../Core/Src/ms5849_funcs.cpp \
+../Core/Src/sample.cpp \
 ../Core/Src/sensor_interface.cpp 
 
 C_SRCS += \
@@ -68,6 +69,7 @@ OBJS += \
 ./Core/Src/ms5849.o \
 ./Core/Src/ms5849_funcs.o \
 ./Core/Src/printing.o \
+./Core/Src/sample.o \
 ./Core/Src/sensor_interface.o \
 ./Core/Src/spi.o \
 ./Core/Src/stm32g4xx_hal_msp.o \
@@ -84,6 +86,7 @@ CPP_DEPS += \
 ./Core/Src/fingertip_net.d \
 ./Core/Src/math_ops.d \
 ./Core/Src/ms5849_funcs.d \
+./Core/Src/sample.d \
 ./Core/Src/sensor_interface.d 
 
 
@@ -96,7 +99,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.cpp Core/Src/subdir.m
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/BNO080.cyclo ./Core/Src/BNO080.d ./Core/Src/BNO080.o ./Core/Src/BNO080.su ./Core/Src/ForceSensor.cyclo ./Core/Src/ForceSensor.d ./Core/Src/ForceSensor.o ./Core/Src/ForceSensor.su ./Core/Src/Quaternion.cyclo ./Core/Src/Quaternion.d ./Core/Src/Quaternion.o ./Core/Src/Quaternion.su ./Core/Src/fdcan.cyclo ./Core/Src/fdcan.d ./Core/Src/fdcan.o ./Core/Src/fdcan.su ./Core/Src/fingertip.cyclo ./Core/Src/fingertip.d ./Core/Src/fingertip.o ./Core/Src/fingertip.su ./Core/Src/fingertip_net.cyclo ./Core/Src/fingertip_net.d ./Core/Src/fingertip_net.o ./Core/Src/fingertip_net.su ./Core/Src/gpio.cyclo ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/i2c.cyclo ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/i2c.su ./Core/Src/kaist_net.cyclo ./Core/Src/kaist_net.d ./Core/Src/kaist_net.o ./Core/Src/kaist_net.su ./Core/Src/kaist_net_selftest.cyclo ./Core/Src/kaist_net_selftest.d ./Core/Src/kaist_net_selftest.o ./Core/Src/kaist_net_selftest.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/math_ops.cyclo ./Core/Src/math_ops.d ./Core/Src/math_ops.o ./Core/Src/math_ops.su ./Core/Src/ms5849.cyclo ./Core/Src/ms5849.d ./Core/Src/ms5849.o ./Core/Src/ms5849.su ./Core/Src/ms5849_funcs.cyclo ./Core/Src/ms5849_funcs.d ./Core/Src/ms5849_funcs.o ./Core/Src/ms5849_funcs.su ./Core/Src/printing.cyclo ./Core/Src/printing.d ./Core/Src/printing.o ./Core/Src/printing.su ./Core/Src/sensor_interface.cyclo ./Core/Src/sensor_interface.d ./Core/Src/sensor_interface.o ./Core/Src/sensor_interface.su ./Core/Src/spi.cyclo ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/spi.su ./Core/Src/stm32g4xx_hal_msp.cyclo ./Core/Src/stm32g4xx_hal_msp.d ./Core/Src/stm32g4xx_hal_msp.o ./Core/Src/stm32g4xx_hal_msp.su ./Core/Src/stm32g4xx_it.cyclo ./Core/Src/stm32g4xx_it.d ./Core/Src/stm32g4xx_it.o ./Core/Src/stm32g4xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g4xx.cyclo ./Core/Src/system_stm32g4xx.d ./Core/Src/system_stm32g4xx.o ./Core/Src/system_stm32g4xx.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.cyclo ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su
+	-$(RM) ./Core/Src/BNO080.cyclo ./Core/Src/BNO080.d ./Core/Src/BNO080.o ./Core/Src/BNO080.su ./Core/Src/ForceSensor.cyclo ./Core/Src/ForceSensor.d ./Core/Src/ForceSensor.o ./Core/Src/ForceSensor.su ./Core/Src/Quaternion.cyclo ./Core/Src/Quaternion.d ./Core/Src/Quaternion.o ./Core/Src/Quaternion.su ./Core/Src/fdcan.cyclo ./Core/Src/fdcan.d ./Core/Src/fdcan.o ./Core/Src/fdcan.su ./Core/Src/fingertip.cyclo ./Core/Src/fingertip.d ./Core/Src/fingertip.o ./Core/Src/fingertip.su ./Core/Src/fingertip_net.cyclo ./Core/Src/fingertip_net.d ./Core/Src/fingertip_net.o ./Core/Src/fingertip_net.su ./Core/Src/gpio.cyclo ./Core/Src/gpio.d ./Core/Src/gpio.o ./Core/Src/gpio.su ./Core/Src/i2c.cyclo ./Core/Src/i2c.d ./Core/Src/i2c.o ./Core/Src/i2c.su ./Core/Src/kaist_net.cyclo ./Core/Src/kaist_net.d ./Core/Src/kaist_net.o ./Core/Src/kaist_net.su ./Core/Src/kaist_net_selftest.cyclo ./Core/Src/kaist_net_selftest.d ./Core/Src/kaist_net_selftest.o ./Core/Src/kaist_net_selftest.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/math_ops.cyclo ./Core/Src/math_ops.d ./Core/Src/math_ops.o ./Core/Src/math_ops.su ./Core/Src/ms5849.cyclo ./Core/Src/ms5849.d ./Core/Src/ms5849.o ./Core/Src/ms5849.su ./Core/Src/ms5849_funcs.cyclo ./Core/Src/ms5849_funcs.d ./Core/Src/ms5849_funcs.o ./Core/Src/ms5849_funcs.su ./Core/Src/printing.cyclo ./Core/Src/printing.d ./Core/Src/printing.o ./Core/Src/printing.su ./Core/Src/sample.cyclo ./Core/Src/sample.d ./Core/Src/sample.o ./Core/Src/sample.su ./Core/Src/sensor_interface.cyclo ./Core/Src/sensor_interface.d ./Core/Src/sensor_interface.o ./Core/Src/sensor_interface.su ./Core/Src/spi.cyclo ./Core/Src/spi.d ./Core/Src/spi.o ./Core/Src/spi.su ./Core/Src/stm32g4xx_hal_msp.cyclo ./Core/Src/stm32g4xx_hal_msp.d ./Core/Src/stm32g4xx_hal_msp.o ./Core/Src/stm32g4xx_hal_msp.su ./Core/Src/stm32g4xx_it.cyclo ./Core/Src/stm32g4xx_it.d ./Core/Src/stm32g4xx_it.o ./Core/Src/stm32g4xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g4xx.cyclo ./Core/Src/system_stm32g4xx.d ./Core/Src/system_stm32g4xx.o ./Core/Src/system_stm32g4xx.su ./Core/Src/tim.cyclo ./Core/Src/tim.d ./Core/Src/tim.o ./Core/Src/tim.su ./Core/Src/usart.cyclo ./Core/Src/usart.d ./Core/Src/usart.o ./Core/Src/usart.su
 
 .PHONY: clean-Core-2f-Src
 

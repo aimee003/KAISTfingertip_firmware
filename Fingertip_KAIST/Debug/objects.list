@@ -13,6 +13,7 @@
 "./Core/Src/ms5849.o"
 "./Core/Src/ms5849_funcs.o"
 "./Core/Src/printing.o"
+"./Core/Src/sample.o"
 "./Core/Src/sensor_interface.o"
 "./Core/Src/spi.o"
 "./Core/Src/stm32g4xx_hal_msp.o"

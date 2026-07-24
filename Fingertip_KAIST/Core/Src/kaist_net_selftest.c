@@ -1,10 +1,15 @@
 /* AUTO-GENERATED. Call nn_selftest(&w) at boot before trusting the net.
  *
- * Replays golden vectors through the emitted C and compares against PyTorch.
- * Verifies: weights, layer order, activations, normalize_u.
- * Does NOT verify the ring-buffer flatten order -- it calls nn_forward_raw()
+ * Replays golden vectors through the emitted C and compares against the fp32
+ * PyTorch model. Verifies weights, layer order, activations, normalize_u and --
+ * for int16 builds -- the quantization scales and packed byte order.
+ *
+ * It does NOT verify the ring-buffer flatten order: it calls nn_forward_raw()
  * directly, bypassing nn_push(). To check that, capture one real NN_HISTORY-deep
- * window, run it through the Python model, and compare against nn_infer(). */
+ * window of raw_data, run it through the Python model, and compare nn_infer().
+ *
+ * *worst_out receives the largest RELATIVE tolerance usage: 0.5 means "used half
+ * the allowed error", 1.0 means "at the limit". Returns 1 on pass. */
 #include "kaist_net.h"
 #include "kaist_net_golden.h"
 #include <math.h>
@@ -12,20 +17,18 @@
 int nn_selftest(float *worst_out)
 {
     nn_output_t o;
-    float worst = 0.0f;
+    float worst = 0.0f, r;
     for (int k = 0; k < NN_GOLDEN_N; ++k) {
         nn_forward_raw(&nn_golden_in[k * NN_IN_CHAN], &o);
-        const float e[7] = {
-            fabsf(o.contact_prob - nn_golden_prob[k]),
-            fabsf(o.F[0] - nn_golden_F[k * 3 + 0]),
-            fabsf(o.F[1] - nn_golden_F[k * 3 + 1]),
-            fabsf(o.F[2] - nn_golden_F[k * 3 + 2]),
-            fabsf(o.u[0] - nn_golden_u[k * 3 + 0]),
-            fabsf(o.u[1] - nn_golden_u[k * 3 + 1]),
-            fabsf(o.u[2] - nn_golden_u[k * 3 + 2]),
-        };
-        for (int i = 0; i < 7; ++i) if (e[i] > worst) worst = e[i];
+        r = fabsf(o.contact_prob - nn_golden_prob[k]) / NN_TOL_PROB;
+        if (r > worst) worst = r;
+        for (int i = 0; i < 3; ++i) {
+            r = fabsf(o.F[i] - nn_golden_F[k * 3 + i]) / NN_TOL_F;
+            if (r > worst) worst = r;
+            r = fabsf(o.u[i] - nn_golden_u[k * 3 + i]) / NN_TOL_U;
+            if (r > worst) worst = r;
+        }
     }
     if (worst_out) *worst_out = worst;
-    return worst < 1e-3f;   /* fp32 accumulation-order slack; u is in mm */
+    return worst <= 1.0f;
 }

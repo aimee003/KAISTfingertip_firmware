@@ -346,13 +346,13 @@ void ForceSensor::Evaluate(){
 void ForceSensor::Calibrate(){
 
     float temp_offsets[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    int num_samples = 10;
+    int num_samples = 5000;
     for (int i=0; i<num_samples; i++){
         Sample();
         for (int j=0; j<8; j++){
             temp_offsets[j] += ((float)raw_data[j])/((float)num_samples);
         }
-        HAL_Delay(10); // wait for 10ms for next sample
+        HAL_Delay(1); // wait for 10ms for next sample
     }
     for (int i=0; i<8; i++){
         offsets[i] = (int)temp_offsets[i];

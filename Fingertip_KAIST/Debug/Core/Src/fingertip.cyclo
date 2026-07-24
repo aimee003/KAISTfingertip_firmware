@@ -3,4 +3,4 @@ fingertip.cpp:94:6:void pack_tof_reply(uint8_t*)	1
 fingertip.cpp:101:6:void pack_imu_reply(uint8_t*)	1
 fingertip.cpp:115:6:void pack_nn_reply(uint8_t*, uint8_t*, uint8_t*, nn_output_t*)	1
 fingertip.cpp:146:5:int fingertip_main()	12
-fingertip.cpp:513:1:cpp)	1
+fingertip.cpp:547:1:cpp)	1

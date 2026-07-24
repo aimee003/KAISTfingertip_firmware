@@ -26,7 +26,6 @@ int fingertip_init(void)
         printf("Force Sensor Init Failed!\n\r");
         return FT_INIT_ERR_FS;
     }
-
     fingertip.Calibrate();      /* averages 10 rest samples into offsets[] */
     nn_reset();
 
@@ -51,6 +50,14 @@ int fingertip_init(void)
     }
 
     return FT_INIT_OK;
+}
+
+/* fingertip_sensors.cpp */
+int fingertip_calibrate()
+{
+	fingertip.Calibrate();
+    nn_reset();
+    return FT_CAL_OK;
 }
 
 /* -------------------------------------------------------------------------

@@ -16,6 +16,10 @@ extern "C" {
 #define FT_INIT_ERR_IMU   3     /* BNO080                              */
 
 /* Return codes for fingertip_sample() */
+#define FT_CAL_OK   0
+#define FT_CAL_ERR  1
+
+/* Return codes for fingertip_sample() */
 #define FT_SAMPLE_OK      0
 #define FT_SAMPLE_WARMUP  1     /* valid frame, NN history not yet full */
 
@@ -44,6 +48,9 @@ typedef struct {
  * Returns FT_INIT_OK, or the FT_INIT_ERR_* code of the first stage to fail.
  * Does NOT touch FDCAN -- that stays in the caller.                       */
 int fingertip_init(void);
+
+
+int fingertip_calibrate();   /* cb may be NULL */
 
 /* Take one full sample of all sensors and run NN inference.
  * `out` must be non-NULL. Returns FT_SAMPLE_OK, or FT_SAMPLE_WARMUP while

@@ -1,2 +1,2 @@
 ../Core/Src/fingertip.cpp:54:6:void pack_all_reply(uint8_t*, const fingertip_data_t*)	32	static
-../Core/Src/fingertip.cpp:77:5:int fingertip_main()	200	static
+../Core/Src/fingertip.cpp:95:5:int fingertip_main()	56	static

@@ -1,4 +1,5 @@
 ../Core/Src/sample.cpp:17:14:ForceSensor* fingertip_device()	0	static
 ../Core/Src/sample.cpp:22:5:int fingertip_init()	16	static
-../Core/Src/sample.cpp:59:5:int fingertip_sample(fingertip_data_t*)	40	static
-../Core/Src/sample.cpp:107:1:cpp)	0	static
+../Core/Src/sample.cpp:56:5:int fingertip_calibrate()	8	static
+../Core/Src/sample.cpp:66:5:int fingertip_sample(fingertip_data_t*)	40	static
+../Core/Src/sample.cpp:114:1:cpp)	0	static

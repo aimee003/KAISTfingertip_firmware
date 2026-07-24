@@ -64,14 +64,32 @@ void pack_all_reply(uint8_t *msg, const fingertip_data_t *s){
     put_i16(&msg[8],  q100(s->nn.u[0]));
     put_i16(&msg[10], q100(s->nn.u[1]));
     put_i16(&msg[12], q100(s->nn.u[2]));
-    msg[14] = (uint8_t)(s->range[1] >> 8);
-    msg[15] = (uint8_t)(s->range[1] & 0xFF);
-    msg[16] = (uint8_t)(s->range[2] >> 8);
-    msg[17] = (uint8_t)(s->range[2] & 0xFF);
+    put_i16(&msg[10], q100(s->range[1]));
+    put_i16(&msg[12], q100(s->range[2]));
     put_i16(&msg[18], (int32_t)lroundf(s->roll));
     put_i16(&msg[20], (int32_t)lroundf(s->pitch));
     put_i16(&msg[22], (int32_t)lroundf(s->yaw));
 }
+
+#define FT_CMD_ID         0x3F3    /* 0x3F3, standard ID */
+#define FT_CMD_CALIBRATE  0x0B    /* payload byte 0 */
+
+static int poll_can_command(void)
+{
+    int want_cal = 0;
+    while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
+        if (HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0,
+                                   &rxMsg, can_rx_buf) != HAL_OK) break;
+        if (rxMsg.Identifier == FT_CMD_ID &&
+            rxMsg.DataLength >= 1 &&
+            can_rx_buf[0] == FT_CMD_CALIBRATE) {
+            want_cal = 1;        /* drain the rest of the FIFO first */
+        }
+    }
+    return want_cal;
+}
+
+
 
 // main CPP loop
 int fingertip_main(void){
@@ -126,11 +144,12 @@ int fingertip_main(void){
 			uint32_t start_time = __HAL_TIM_GET_COUNTER(&htim15);
 			loop_counter++;
 			if (HAL_GetTick() - last_hz_print >= 1000) {
-				printf("Loop Rate: %lu Hz, Eval Time: %lu us, Eval Time nn: %lu us\n\r", loop_counter, eval_time, eval_time_nn);
+//				printf("Loop Rate: %lu Hz, Eval Time: %lu us, Eval Time nn: %lu us\n\r", loop_counter, eval_time, eval_time_nn);
 				loop_counter = 0;
 				last_hz_print = HAL_GetTick();
 			}
 			// reset interrupt flag
+	        if (poll_can_command()) { fingertip_calibrate(); }
 			sample_flag = 0;
 
 			// sample fingertip, ToF, and IMU
@@ -153,106 +172,9 @@ int fingertip_main(void){
 				HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, header, data);
 	        };
 
-	        send_can(&txMsg_all, txMsg_all_data);
+//	        send_can(&txMsg_all, txMsg_all_data);
 
 	        eval_time = __HAL_TIM_GET_COUNTER(&htim15) - start_time;
-
-//	         Serial version
-//	        printf("%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n\r",
-//	        	HAL_GetTick(),
-//	            fingertip.raw_data[0], fingertip.raw_data[1], fingertip.raw_data[2], fingertip.raw_data[3],
-//	            fingertip.raw_data[4], fingertip.raw_data[5], fingertip.raw_data[6], fingertip.raw_data[7],
-//	            range[1], range[2]);
-
-
-//			uint8_t tx_buf[1 + 48 + 1]; // header + data + checksum
-//
-//			// Fill header
-//			tx_buf[0] = HEADER_Serial;
-//
-//			// Fill data (little endian from uint16_t)
-//			uint32_t packet[12];
-//
-//			for (int i = 0; i < 8; ++i) {
-//				packet[i] = fingertip.raw_data[i];
-//			}
-//			for (int i = 0; i < 4; i++) {
-//				packet[i + 8] = range[i];
-//			}
-//
-//			// Copy data into tx buffer
-//			memcpy(&tx_buf[1], packet, sizeof(packet));
-//
-//			// Compute checksum (simple sum)
-//			uint8_t checksum = 0;
-//			for (int i = 0; i < 48; i++) {
-//				checksum += tx_buf[1 + i];
-//			}
-//
-//			// Store checksum
-//			tx_buf[49] = checksum;
-
-			// Transmit
-//			HAL_UART_Transmit_IT(&huart1, tx_buf, sizeof(tx_buf));
-
-//			printf("\n");
-//			printf("\n");
-//			printf("%lu\n", HAL_GetTick()-timer);
-//			printf("\n");
-//			printf("\n");
-
-//	        char msg_buf[128];
-//	        int msg_len = sprintf(msg_buf, "%lu,0,0,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
-//	                              HAL_GetTick(),
-//	                              fingertip.raw_data[0], fingertip.raw_data[1],
-//	                              fingertip.raw_data[2], fingertip.raw_data[3],
-//	                              fingertip.raw_data[4], fingertip.raw_data[5],
-//	                              fingertip.raw_data[6], fingertip.raw_data[7],
-//	                              range[0], range[1], range[2], range[3]);
-//
-//	        // Non-blocking — returns immediately, DMA handles the rest
-//	        if (HAL_UART_GetState(&huart1) == HAL_UART_STATE_READY) {
-//	            HAL_UART_Transmit_DMA(&huart1, (uint8_t*)msg_buf, msg_len);
-//	        }
-
-//	        char msg_buf[128]; // Create the buffer
-//	        int msg_len;       // To store the actual length of the string
-////
-////	        // 1. Format the string into the buffer
-//	        msg_len = sprintf(msg_buf, "%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
-//	                          HAL_GetTick(),
-//	                          fingertip.raw_data[0], fingertip.raw_data[1], fingertip.raw_data[2], fingertip.raw_data[3],
-//	                          fingertip.raw_data[4], fingertip.raw_data[5], fingertip.raw_data[6], fingertip.raw_data[7],
-//	                          range[0], range[1], range[2]);
-//
-////	        // 2. Transmit the buffer via UART
-////	        // We use msg_len to tell the hardware exactly how many bytes to send
-////	        if (huart1.gState != HAL_UART_STATE_READY) {
-////	            HAL_UART_Abort(&huart1);
-////	            HAL_UART_DeInit(&huart1);
-////	            HAL_UART_Init(&huart1);
-////	        }
-////	        HAL_StatusTypeDef status;
-//	        HAL_UART_Transmit(&huart1, (uint8_t*)msg_buf, msg_len, 10);
-//
-//	        if (status != HAL_OK) {
-//	            // The UART is stuck! Reset the hardware registers to unblock it.
-//	            __HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_ORE | UART_FLAG_FE | UART_FLAG_NE);
-//
-//	            // Optional: Re-initialize if the error is terminal
-//	            if(status == HAL_ERROR) {
-//	                // Force-abort any stuck DMA/IT transfer
-//	                HAL_UART_Abort(&huart1);
-//
-//	                // Clear all error flags
-//	                __HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_ORE | UART_FLAG_FE | UART_FLAG_NE);
-//
-//	                // Always reinit — it's safe and fast
-//	                HAL_UART_DeInit(&huart1);
-//	                HAL_UART_Init(&huart1);
-//	            }
-//	        }
-
 
 //			printf("Pressure: %03d,%03d,%03d,%03d,%03d,%03d,%03d,%03d \n\r", fingertip.raw_data[0],fingertip.raw_data[1],fingertip.raw_data[2],
 //						fingertip.raw_data[3],fingertip.raw_data[4],fingertip.raw_data[5],fingertip.raw_data[6],fingertip.raw_data[7]);
@@ -267,33 +189,33 @@ int fingertip_main(void){
 //			printf("Force: %d.%02d\n\r", whole, frac);
 //			printf("Position: %d,%d,%d\n\r\n\r", (int)(nn.u[0]), (int)(nn.u[1]), (int)(nn.u[2]));
 //			printf(%d, %d.%02d, )
-
-			int whole[7];
-			int frac[7];
-			const char * sgn[7];
-			whole[0] = (int) sensors.nn.contact_prob;
-			frac[0] = (int)((sensors.nn.contact_prob - whole[0]) * 100);
-			for (int i = 0; i < 3; ++i) {
-				sgn[i+1] = (sensors.nn.F[i] < 0.0f) ? "-" : "";
-				whole[i+1] = (int) sensors.nn.F[i];
-				frac[i+1] = (int)((sensors.nn.F[i] - whole[i+1]) * 100);
-				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
-				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
-			}
-			for (int i = 0; i < 3; ++i) {
-				sgn[i+4] = (sensors.nn.u[i] < 0.0f) ? "-" : "";
-				whole[i+4] = (int) sensors.nn.u[i];
-				frac[i+4] = (int)((sensors.nn.u[i] - whole[i+4]) * 100);
-				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
-				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
-			}
-
-	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
-	        	HAL_GetTick(),
-				whole[0], frac[0],
-				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
-				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
-
+//
+//			int whole[7];
+//			int frac[7];
+//			const char * sgn[7];
+//			whole[0] = (int) sensors.nn.contact_prob;
+//			frac[0] = (int)((sensors.nn.contact_prob - whole[0]) * 100);
+//			for (int i = 0; i < 3; ++i) {
+//				sgn[i+1] = (sensors.nn.F[i] < 0.0f) ? "-" : "";
+//				whole[i+1] = (int) sensors.nn.F[i];
+//				frac[i+1] = (int)((sensors.nn.F[i] - whole[i+1]) * 100);
+//				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
+//				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
+//			}
+//			for (int i = 0; i < 3; ++i) {
+//				sgn[i+4] = (sensors.nn.u[i] < 0.0f) ? "-" : "";
+//				whole[i+4] = (int) sensors.nn.u[i];
+//				frac[i+4] = (int)((sensors.nn.u[i] - whole[i+4]) * 100);
+//				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
+//				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
+//			}
+//
+//	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
+//	        	HAL_GetTick(),
+//				whole[0], frac[0],
+//				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
+//				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
+//
 		}
 
 	}

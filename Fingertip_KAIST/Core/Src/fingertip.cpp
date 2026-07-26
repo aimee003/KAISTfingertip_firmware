@@ -190,31 +190,31 @@ int fingertip_main(void){
 //			printf("Position: %d,%d,%d\n\r\n\r", (int)(nn.u[0]), (int)(nn.u[1]), (int)(nn.u[2]));
 //			printf(%d, %d.%02d, )
 //
-//			int whole[7];
-//			int frac[7];
-//			const char * sgn[7];
-//			whole[0] = (int) sensors.nn.contact_prob;
-//			frac[0] = (int)((sensors.nn.contact_prob - whole[0]) * 100);
-//			for (int i = 0; i < 3; ++i) {
-//				sgn[i+1] = (sensors.nn.F[i] < 0.0f) ? "-" : "";
-//				whole[i+1] = (int) sensors.nn.F[i];
-//				frac[i+1] = (int)((sensors.nn.F[i] - whole[i+1]) * 100);
-//				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
-//				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
-//			}
-//			for (int i = 0; i < 3; ++i) {
-//				sgn[i+4] = (sensors.nn.u[i] < 0.0f) ? "-" : "";
-//				whole[i+4] = (int) sensors.nn.u[i];
-//				frac[i+4] = (int)((sensors.nn.u[i] - whole[i+4]) * 100);
-//				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
-//				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
-//			}
-//
-//	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
-//	        	HAL_GetTick(),
-//				whole[0], frac[0],
-//				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
-//				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
+			int whole[7];
+			int frac[7];
+			const char * sgn[7];
+			whole[0] = (int) sensors.nn.contact_prob;
+			frac[0] = (int)((sensors.nn.contact_prob - whole[0]) * 100);
+			for (int i = 0; i < 3; ++i) {
+				sgn[i+1] = (sensors.nn.F[i] < 0.0f) ? "-" : "";
+				whole[i+1] = (int) sensors.nn.F[i];
+				frac[i+1] = (int)((sensors.nn.F[i] - whole[i+1]) * 100);
+				if (whole[i+1] < 0) whole[i+1] = -whole[i+1];
+				if (frac[i+1] < 0) frac[i+1] = -frac[i+1];
+			}
+			for (int i = 0; i < 3; ++i) {
+				sgn[i+4] = (sensors.nn.u[i] < 0.0f) ? "-" : "";
+				whole[i+4] = (int) sensors.nn.u[i];
+				frac[i+4] = (int)((sensors.nn.u[i] - whole[i+4]) * 100);
+				if (whole[i+4] < 0) whole[i+4] = -whole[i+4];
+				if (frac[i+4] < 0) frac[i+4] = -frac[i+4];
+			}
+
+	        printf("%lu,%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d,%s%d.%02d\n\r",
+	        	HAL_GetTick(),
+				whole[0], frac[0],
+				sgn[1], whole[1], frac[1], sgn[2], whole[2], frac[2], sgn[3], whole[3], frac[3],
+				sgn[4], whole[4], frac[4], sgn[5], whole[5], frac[5], sgn[6], whole[6], frac[6]);
 //
 		}
 

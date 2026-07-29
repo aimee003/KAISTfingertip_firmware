@@ -12,7 +12,7 @@
 #include "Quaternion.h"
 #include <string.h>
 
-#define SELECTED_FINGER 3
+#define SELECTED_FINGER 1
 
 #define PR_1 			((SELECTED_FINGER - 1)*4 + 0)
 #define PR_2 			((SELECTED_FINGER - 1)*4 + 1)
@@ -106,6 +106,16 @@ void pack_imu_reply(uint8_t * msg){
 int fingertip_main(void){
 //
 //	for(volatile int i = 0; i < 100000; i++); // Manual burn loop
+
+	// --- DIAGNOSTIC: boot-confirm blink ---
+	// 5 fast blinks at entry == program reached fingertip_main from flash.
+	// If you see this standalone (no ST-Link), the chip is booting & running.
+	for (int i = 0; i < 5; i++) {
+		HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
+		HAL_Delay(100);
+		HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
+		HAL_Delay(100);
+	}
 
 	HAL_Delay(3000);
 
@@ -236,8 +246,19 @@ int fingertip_main(void){
 	uint32_t eval_time = 0;
 //	uint32_t timer = 0;
 
+	uint32_t last_led_toggle = HAL_GetTick();
+
 	while (1) {
 		/* Super loop */
+
+		// --- DIAGNOSTIC: heartbeat ---
+		// Steady ~4 Hz toggle == reached the super-loop (all sensor inits passed).
+		// If the boot-blink ran but you never see this heartbeat, execution is
+		// stuck in HAL_Delay/sensor init / Error_Handler() above.
+		if (HAL_GetTick() - last_led_toggle >= 125) {
+			HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
+			last_led_toggle = HAL_GetTick();
+		}
 
 		// Notes:
 		// - Loop is set to run at 200Hz

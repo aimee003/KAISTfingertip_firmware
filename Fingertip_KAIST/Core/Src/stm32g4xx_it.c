@@ -58,6 +58,7 @@
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
+extern FDCAN_HandleTypeDef hfdcan2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -236,6 +237,12 @@ void USART1_IRQHandler(void)
 void DMA1_Channel1_IRQHandler(void)
 {
     HAL_DMA_IRQHandler(huart1.hdmatx);
+}
+
+/* Drives HAL_FDCAN_RxFifo0Callback() in fdcan.cpp. */
+void FDCAN2_IT0_IRQHandler(void)
+{
+    HAL_FDCAN_IRQHandler(&hfdcan2);
 }
 /* USER CODE BEGIN 1 */
 

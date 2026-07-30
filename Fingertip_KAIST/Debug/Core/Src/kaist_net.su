@@ -1,5 +1,0 @@
-../Core/Src/kaist_net.c:4007:13:dense.constprop	96	static,ignoring_inline_asm
-../Core/Src/kaist_net.c:4067:6:nn_forward_raw	64	static,ignoring_inline_asm
-../Core/Src/kaist_net.c:4108:6:nn_reset	8	static
-../Core/Src/kaist_net.c:4110:6:nn_push	16	static
-../Core/Src/kaist_net.c:4117:5:nn_infer	16	static

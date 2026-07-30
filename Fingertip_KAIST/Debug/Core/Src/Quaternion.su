@@ -1,2 +1,0 @@
-../Core/Src/Quaternion.c:9:6:Quaternion_Update	48	static
-../Core/Src/Quaternion.c:44:7:invSqrt	0	static

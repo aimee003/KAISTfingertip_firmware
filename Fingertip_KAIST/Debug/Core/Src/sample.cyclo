@@ -1,5 +1,0 @@
-sample.cpp:17:14:ForceSensor* fingertip_device()	1
-sample.cpp:22:5:int fingertip_init()	5
-sample.cpp:56:5:int fingertip_calibrate()	1
-sample.cpp:66:5:int fingertip_sample(fingertip_data_t*)	5
-sample.cpp:114:1:cpp)	1

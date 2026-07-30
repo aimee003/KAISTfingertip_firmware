@@ -1,9 +1,0 @@
-math_ops.cpp:5:7:float fmaxf2(float, float)	1
-math_ops.cpp:10:7:float fminf2(float, float)	1
-math_ops.cpp:15:7:float fmaxf3(float, float, float)	2
-math_ops.cpp:20:7:float fminf3(float, float, float)	2
-math_ops.cpp:25:7:float roundfl(float)	2
-math_ops.cpp:31:6:void limit_norm(float*, float*, float)	2
-math_ops.cpp:40:6:void limit(float*, float, float)	1
-math_ops.cpp:44:5:int float_to_uint(float, float, float, int)	1
-math_ops.cpp:52:7:float uint_to_float(int, float, float, int)	1

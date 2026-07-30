@@ -1,0 +1,11 @@
+# STM32CubeIDE build output — regenerated from .cproject on every build.
+# Committing it means one machine's artifacts (and its absolute paths) break
+# the next machine's build.
+Fingertip_KAIST/Debug/
+Fingertip_KAIST/Release/
+
+# STM32CubeIDE workspace metadata
+.settings/
+.metadata/
+
+__pycache__/

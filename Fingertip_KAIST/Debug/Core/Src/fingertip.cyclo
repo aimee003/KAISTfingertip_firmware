@@ -1,2 +1,0 @@
-fingertip.cpp:54:6:void pack_all_reply(uint8_t*, const fingertip_data_t*)	1
-fingertip.cpp:95:5:int fingertip_main()	9

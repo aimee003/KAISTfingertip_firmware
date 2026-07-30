@@ -15,9 +15,8 @@ extern "C" {
 #define FT_INIT_ERR_TOF   2     /* VL53L4CD ranging sensors            */
 #define FT_INIT_ERR_IMU   3     /* BNO080                              */
 
-/* Return codes for fingertip_sample() */
-#define FT_CAL_OK   0
-#define FT_CAL_ERR  1
+/* Rest samples averaged into the baseline, one per 5 ms tick -> ~5 s. */
+#define CAL_SAMPLES 1000
 
 /* Return codes for fingertip_sample() */
 #define FT_SAMPLE_OK      0
@@ -50,7 +49,13 @@ typedef struct {
 int fingertip_init(void);
 
 
-int fingertip_calibrate();   /* cb may be NULL */
+/* Baseline calibration. fingertip_init() drives this blocking at boot; the
+ * run loop drives it one sample per tick on a CAN command.
+ * _reset() clears the accumulator and sets the target; _accumulate() takes one
+ * fingertip_sample() result and returns 1 on the call that commits the new
+ * offsets. */
+void fingertip_calibrate_reset(int n_samples);
+int  fingertip_calibrate_accumulate(const fingertip_data_t *s);
 
 /* Take one full sample of all sensors and run NN inference.
  * `out` must be non-NULL. Returns FT_SAMPLE_OK, or FT_SAMPLE_WARMUP while

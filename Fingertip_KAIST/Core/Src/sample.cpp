@@ -1,4 +1,5 @@
 #include "sample.h"
+#include "fdcan.h"      /* can_set_calibrating / can_pack_reply / can_send_reply */
 
 #include "ForceSensor.h"
 #include "BNO080.h"
@@ -30,14 +31,20 @@ int fingertip_init(void)
      * the baseline is measured under the conditions inference will see.
      * Blocking here is fine -- nothing else is running yet. ToF and IMU are
      * not up, so raw[] is filled directly instead of via fingertip_sample(). */
+    can_set_calibrating(1);     /* so the host sees CALIBRATING, not silence */
     fingertip_calibrate_reset(CAL_SAMPLES);
     fingertip_data_t tmp = {};
-    for (;;) {
+    for (int n = 0; ; ++n) {
         fingertip.Sample();
         for (int i = 0; i < NN_N_TAXEL; ++i) tmp.raw[i] = (int32_t)fingertip.raw_data[i];
         if (fingertip_calibrate_accumulate(&tmp)) break;   /* also does nn_reset() */
+        if ((n % CAL_TX_EVERY_SAMPLES) == 0) {             /* heartbeat; loop is blocked */
+            can_pack_reply(&tmp);
+            can_send_reply();
+        }
         HAL_Delay(4);           /* + ~1.2 ms Sample() -> ~5 ms per sample */
     }
+    can_set_calibrating(0);
 
     float worst;
     if (!nn_selftest(&worst)) {
@@ -67,8 +74,6 @@ int fingertip_init(void)
  * sampling rate so the baseline is measured under the same conditions the
  * neural net sees at inference time.
  * ---------------------------------------------------------------------- */
-#define CAL_BLINK_SAMPLES 100   /* x ~5 ms -> ~1 Hz blink */
-
 static float cal_acc[8];
 static int   cal_count;
 static int   cal_target;
@@ -78,7 +83,7 @@ void fingertip_calibrate_reset(int n_samples)
     memset(cal_acc, 0, sizeof cal_acc);
     cal_count  = 0;
     cal_target = (n_samples > 0) ? n_samples : 1;
-    HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(STATUS_LED, GPIO_PIN_RESET);
 }
 
 /* Returns 1 on the call that commits the new offsets. */
@@ -89,13 +94,13 @@ int fingertip_calibrate_accumulate(const fingertip_data_t *s)
 
     if (++cal_count < cal_target) {
         if ((cal_count % CAL_BLINK_SAMPLES) == 0)
-            HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
+            HAL_GPIO_TogglePin(STATUS_LED);
         return 0;
     }
 
     for (int i = 0; i < 8; ++i) fingertip.offsets[i] = (int)cal_acc[i];
     nn_reset();
-    HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);   /* solid = running */
+    HAL_GPIO_WritePin(STATUS_LED, GPIO_PIN_SET);   /* solid = running */
     return 1;
 }
 

@@ -29,18 +29,17 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#include "sample.h"     /* fingertip_data_t */
+#include "user_config.h"   /* FINGERTIP_SENSOR_TX_ID / _RX_ID */
+#include "sample.h"        /* fingertip_data_t */
 /* USER CODE END Includes */
 
 extern FDCAN_HandleTypeDef hfdcan2;
 
 /* USER CODE BEGIN Private defines */
 
-#define SELECTED_FINGER   3      /* per-board; only thing that differs */
+/* Bus addresses live in user_config.h; the protocol itself is defined here. */
 
-#define FINGER_MSG_ID     (0x10 + (SELECTED_FINGER - 1))   /* sensor -> host */
-#define FT_CMD_ID         0x3F3                            /* host -> sensors */
-#define FT_CMD_CALIBRATE  0x0B                             /* cmd payload byte 0 */
+#define FT_CMD_CALIBRATE  0x0B          /* command payload byte 0 */
 
 /* 26 bytes used; 32 is the next legal FD size. Keep LEN and DLC in sync. */
 #define FINGER_MSG_LEN    32

@@ -8,15 +8,13 @@ extern "C" {
 #include <stdint.h>
 #include "kaist_net.h"          /* nn_output_t, NN_N_TAXEL */
 #include "sensor_interface.h"   /* TOF_SENSOR_COUNT        */
+#include "user_config.h"        /* CAL_SAMPLES             */
 
 /* Return codes for fingertip_init() */
 #define FT_INIT_OK        0
 #define FT_INIT_ERR_FS    1     /* pressure sensor / NN                */
 #define FT_INIT_ERR_TOF   2     /* VL53L4CD ranging sensors            */
 #define FT_INIT_ERR_IMU   3     /* BNO080                              */
-
-/* Rest samples averaged into the baseline, one per 5 ms tick -> ~5 s. */
-#define CAL_SAMPLES 1000
 
 /* Return codes for fingertip_sample() */
 #define FT_SAMPLE_OK      0

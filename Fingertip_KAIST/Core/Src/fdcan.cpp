@@ -56,7 +56,7 @@ void MX_FDCAN2_Init(void)
   hfdcan2.Init.DataSyncJumpWidth = 8;
   hfdcan2.Init.DataTimeSeg1 = 23;
   hfdcan2.Init.DataTimeSeg2 = 8;
-  hfdcan2.Init.StdFiltersNbr = 1;   /* one slot for the FT_CMD_ID filter */
+  hfdcan2.Init.StdFiltersNbr = 1;   /* one slot for the FINGERTIP_SENSOR_RX_ID filter */
   hfdcan2.Init.ExtFiltersNbr = 0;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
@@ -136,9 +136,6 @@ void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* fdcanHandle)
 
 /* USER CODE BEGIN 1 */
 
-/* TODO: bus is inert -- ConfigFilter/ConfigGlobalFilter/Start are never called,
- * so TX and RX both fail with HAL_FDCAN_ERROR_NOT_STARTED. */
-
 static FDCAN_RxHeaderTypeDef rxMsg;
 static FDCAN_TxHeaderTypeDef txMsg_all;
 static FDCAN_FilterTypeDef   can_filt;
@@ -146,7 +143,8 @@ static uint8_t can_rx_buf[64];                  /* CAN FD max payload */
 static uint8_t txMsg_all_data[FINGER_MSG_LEN];
 static uint8_t ft_calibrating = 0;              /* drives FT_STATUS_CALIBRATING */
 static uint8_t tx_seq = 0;                      /* rolling frame counter */
-static volatile uint8_t cal_request = 0;        /* set by RX ISR */
+static volatile uint8_t  cal_request   = 0;     /* set by RX ISR */
+static volatile uint16_t cal_request_n = 0;     /* sample count from the command */
 
 /* big-endian, saturating */
 static inline void put_i16(uint8_t *p, int32_t v){
@@ -159,7 +157,7 @@ static inline int32_t q1000(float x){ return (int32_t)lroundf(1000.0f * x); }
 static inline int32_t  q100(float x){ return (int32_t)lroundf( 100.0f * x); }
 
 void pack_all_reply(uint8_t *msg, const fingertip_data_t *s){
-    /* Fingertip reply: 32-byte CAN FD payload, standard ID 0x10 + (finger - 1).
+    /* Fingertip reply: 32-byte CAN FD payload on FINGERTIP_SENSOR_TX_ID.
      * All multi-byte fields are big-endian signed int16. Divide by the scale
      * to recover the physical value.
      *
@@ -213,12 +211,12 @@ void can_set_calibrating(int on){
 }
 
 void can_init(void){
-    /* Accept only FT_CMD_ID; mask 0x7FF is an exact match. */
+    /* Accept only FINGERTIP_SENSOR_RX_ID; mask 0x7FF is an exact match. */
     can_filt.IdType       = FDCAN_STANDARD_ID;
     can_filt.FilterIndex  = 0;
     can_filt.FilterType   = FDCAN_FILTER_MASK;
     can_filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    can_filt.FilterID1    = FT_CMD_ID;
+    can_filt.FilterID1    = FINGERTIP_SENSOR_RX_ID;
     can_filt.FilterID2    = 0x7FF;
     HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filt);
 
@@ -231,7 +229,7 @@ void can_init(void){
     HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
     /* TX header */
-    txMsg_all.Identifier          = FINGER_MSG_ID;
+    txMsg_all.Identifier          = FINGERTIP_SENSOR_TX_ID;
     txMsg_all.IdType              = FDCAN_STANDARD_ID;
     txMsg_all.TxFrameType         = FDCAN_DATA_FRAME;
     txMsg_all.DataLength          = FINGER_MSG_DLC;
@@ -263,22 +261,33 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     while (HAL_FDCAN_GetRxFifoFillLevel(&hfdcan2, FDCAN_RX_FIFO0) > 0) {
         if (HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0,
                                    &rxMsg, can_rx_buf) != HAL_OK) break;
-        if (rxMsg.Identifier == FT_CMD_ID &&
+        if (rxMsg.Identifier == FINGERTIP_SENSOR_RX_ID &&
             rxMsg.DataLength >= 1 &&
             can_rx_buf[0] == FT_CMD_CALIBRATE) {
+            /* Optional big-endian uint16 sample count in bytes 1-2. Absent or
+             * zero means CAL_SAMPLES. DLC code == byte count below 9, so
+             * comparing DataLength directly is safe for these short frames. */
+            cal_request_n = (rxMsg.DataLength >= 3)
+                          ? (uint16_t)((can_rx_buf[1] << 8) | can_rx_buf[2]) : 0;
             cal_request = 1;
         }
     }
 }
 
-/* Read and clear the latched request. */
+/* Read and clear the latched request. Returns 0 when there is none, otherwise
+ * the number of samples to average -- so the result still works as a boolean. */
 int can_cal_requested(void)
 {
     __disable_irq();
     int req = cal_request;
+    int n   = (int)cal_request_n;
     cal_request = 0;
     __enable_irq();
-    return req;
+
+    if (!req) return 0;
+    if (n <= 0) n = CAL_SAMPLES;                /* absent or 0 -> default */
+    if (n > CAL_SAMPLES_MAX) n = CAL_SAMPLES_MAX;
+    return n;
 }
 
 /* USER CODE END 1 */

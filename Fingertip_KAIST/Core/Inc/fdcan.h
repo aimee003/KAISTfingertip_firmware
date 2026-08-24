@@ -39,6 +39,27 @@ extern FDCAN_HandleTypeDef hfdcan2;
 
 /* Bus addresses live in user_config.h; the protocol itself is defined here. */
 
+/* Command frame: host -> sensor, standard id FINGERTIP_SENSOR_RX_ID.
+ *
+ *   byte   value
+ *   0      opcode, FT_CMD_CALIBRATE
+ *   1-2    optional big-endian uint16 sample count.
+ *          Omit (1-byte frame) or send 0 -> CAL_SAMPLES.
+ *          Clamped to CAL_SAMPLES_MAX.
+ *
+ * Recalibrate with the default count:      0B
+ * Recalibrate averaging 250 samples:       0B 00 FA
+ * Recalibrate averaging 2000 samples:      0B 07 D0
+ *
+ * python-can, RX id 42 and 500 samples:
+ *   bus.send(can.Message(arbitration_id=42, data=bytes([0x0B, 0x01, 0xF4]),
+ *                        is_extended_id=False, is_fd=True, bitrate_switch=True))
+ *
+ * The finger must be untouched and still for the whole calibration -- any
+ * contact gets averaged into the baseline and subtracted from then on.
+ * Progress is reported as FT_STATUS_CALIBRATING in byte 0 of the reply, then
+ * ~32 ticks of FT_STATUS_WARMUP while the NN history refills.
+ */
 #define FT_CMD_CALIBRATE  0x0B          /* command payload byte 0 */
 
 /* 26 bytes used; 32 is the next legal FD size. Keep LEN and DLC in sync. */

@@ -21,9 +21,6 @@ fingertip_data_t sensors;
 
 // main CPP loop
 int fingertip_main(void){
-//
-//	for(volatile int i = 0; i < 100000; i++); // Manual burn loop
-
 	for (int i = 0; i < 5; i++) {
 		HAL_GPIO_WritePin(STATUS_LED, GPIO_PIN_SET);
 		HAL_Delay(100);
@@ -52,7 +49,6 @@ int fingertip_main(void){
 
 	while (1) {
 		/* Super loop */
-
 		// Notes:
 		// - Loop is set to run at 200Hz
 		// - Sampling pressure sensors takes 1160us

@@ -6,8 +6,8 @@
 #include "main.h"       /* LED_1_GPIO_Port / LED_1_Pin, from CubeMX */
 
 /* CAN bus addresses ------------------------------------------------------ */
+#define FINGERTIP_SENSOR_RX_ID  14      /* host -> sensor, commands    (0x20) */
 #define FINGERTIP_SENSOR_TX_ID  24      /* sensor -> host, data frames (0x17) */
-#define FINGERTIP_SENSOR_RX_ID  42      /* host -> sensor, commands    (0x20) */
 
 /* Calibration ------------------------------------------------------------ */
 #define CAL_SAMPLES         1000        /* rest samples averaged, 1 per tick -> ~5 s */
